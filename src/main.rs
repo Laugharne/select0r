@@ -58,7 +58,7 @@ fn parse_args() -> Globals {
 	let parenthesis: usize = args[0].find("(").unwrap();
 	let part_n: &str = &args[0][..parenthesis];
 	let part_a: &str = &args[0][parenthesis..];
-	
+
 	Globals{
 		signature   : args[0].clone(),
 		part_name   : part_n.to_owned(),
@@ -75,9 +75,11 @@ fn compute() {
 
 }
 
+
 fn base64_to_string( digit: u32, value: u32) -> Result<String, std::string::FromUtf8Error> {
 	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
-	let mut value = value;
+
+	let mut value: u32       = value;
 	let mut str_u8: [u8; 10] = [0; 10];
 
 	let mut da: usize = str_u8.len()-1;
