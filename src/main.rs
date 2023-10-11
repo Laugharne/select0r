@@ -23,6 +23,9 @@ struct Globals {
 
 const SEPARATOR: &str = "_";
 
+const BASE_NN: u32    = 64;
+const BASE_MAX: u32   = BASE_NN-1;
+const BASE_BITS: u32  = BASE_MAX.count_ones();
 
 
 fn print_help() {
@@ -40,7 +43,7 @@ fn print_help() {
 
 fn parse_args() -> Globals {
 	let args: Vec<String> = env::args().skip(1).collect();
-	println!("{:?}", args);
+	//println!("{:?}", args);
 	if args.len() != 3 {
 		print_help();
 		eprintln!(
@@ -72,14 +75,45 @@ fn compute() {
 
 }
 
+fn base64_to_string( digit: u32, value: u32) -> Result<String, std::string::FromUtf8Error> {
+	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+	let mut value = value;
+	let mut str_u8: [u8; 10] = [0; 10];
+
+	let mut da: usize = str_u8.len()-1;
+	for _d in 0..digit {
+		str_u8[da]   = ALPHABET[(value & BASE_MAX) as usize];
+		value      >>= BASE_BITS;
+		da -= 1;
+	}
+
+	//println!("{:?}", str_u8);
+	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8.to_vec());
+	match string {
+		Ok(str) => Ok(str),
+		Err(e) => Err(e),
+	}
+}
+
+
 
 fn main_process(g: &Globals) {
 
-	
-	for digit in 1..=5 {
-		let max: u32 = 1 << (6*digit);
+	//for digit in 1..=5 {
+	for digit in 1..=2 {
+		let max: u32 = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
-		// TODO
+		for value in 0..max {
+			let b64 = base64_to_string(digit, value);
+			match b64 {
+				Ok(chaine) => {
+					println!("{}", chaine);
+				}
+				Err(e) => {
+					println!("Erreur de conversion : {:?}", e);
+				}
+			}
+		}
 	}
 }
 
@@ -87,7 +121,7 @@ fn main_process(g: &Globals) {
 fn main() {
 	let g: Globals = parse_args();
 
-	println!("{:?}", g);
+	//println!("{:?}", g);
 
 	main_process( &g);
 
