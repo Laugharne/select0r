@@ -17,6 +17,7 @@ struct Globals {
 	part_name   : String,
 	part_args   : String,
 	difficulty  : u32,
+	nn_threads  : u32,
 	leading_zero: bool,
 }
 
@@ -60,6 +61,7 @@ fn parse_args() -> Globals {
 		part_name   : part_n.to_owned(),
 		part_args   : part_a.to_owned(),
 		difficulty  : args[1].parse::<u32>().unwrap(),
+		nn_threads  : 0,
 		leading_zero: match &*args[2] {"true"=>true,"false"=>false,_=>panic!("invalid leading zero value")},
 	}
 
@@ -72,9 +74,11 @@ fn compute() {
 
 
 fn main_process(g: &Globals) {
+
+	
 	for digit in 1..=5 {
 		let max: u32 = 1 << (6*digit);
-		println!("{} : {}", digit, max);
+		//println!("{} : {}", digit, max);
 		// TODO
 	}
 }
