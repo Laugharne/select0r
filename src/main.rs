@@ -120,7 +120,7 @@ fn main_process(g: &Globals) {
 		//println!("{} : {}", digit, max);
 
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
-		for value in 0..max {
+		for value in 0..max {	// still use `for in` for the moment to use `break` instruction (at the end of the loop)
 
 			match base64_to_suffix(digit, value) {
 				Ok(chaine) => {
@@ -142,15 +142,24 @@ fn main_process(g: &Globals) {
 fn main() {
 	let g: Globals = init_app();
 
-	//println!("{:?}", g);
-	//println!("** {}", num_cpus::get());
-	//
+	println!("{:?}", g);
+
+	/*
 	let mut hasher = crypto::sha3::Sha3::keccak256();
 	let signature = "deposit278591A(uint)";
 	hasher.input_str(&signature);
 	let hash_result = hasher.result_str();
+	assert_eq!(&hash_result[..8], "00000070");
 	println!("{}\t{}", &hash_result[..8], signature);
-	//
+
+	let mut hasher = crypto::sha3::Sha3::keccak256();
+	let signature = "mint(uint256,address)";
+	hasher.input_str(&signature);
+	let hash_result = hasher.result_str();
+	assert_eq!(&hash_result[..8], "94bf804d");
+	println!("{}\t{}", &hash_result[..8], signature);
+	*/
+
 	main_process( &g);
 
 	process::exit(0);
