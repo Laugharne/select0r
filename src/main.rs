@@ -21,11 +21,13 @@ struct Globals {
 	leading_zero: bool,
 }
 
-const SEPARATOR: &str = "_";
+const SEPARATOR: u8 = '_' as u8;
 
 const BASE_NN: u32    = 64;
 const BASE_MAX: u32   = BASE_NN-1;
 const BASE_BITS: u32  = BASE_MAX.count_ones();
+
+const DIGIT_MAX: u32 = 2;	// 2 = test / 5 = release
 
 
 fn print_help() {
@@ -65,7 +67,7 @@ fn parse_args() -> Globals {
 		part_args   : part_a.to_owned(),
 		difficulty  : args[1].parse::<u32>().unwrap(),
 		nn_threads  : 0,
-		leading_zero: match &*args[2] {"true"=>true,"false"=>false,_=>panic!("invalid leading zero value")},
+		leading_zero: match &*args[2] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
 	}
 
 }
@@ -76,21 +78,23 @@ fn compute() {
 }
 
 
-fn base64_to_string( digit: u32, value: u32) -> Result<String, std::string::FromUtf8Error> {
+fn base64_to_suffix( digit: u32, value: u32) -> Result<String, std::string::FromUtf8Error> {
 	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
 	let mut value: u32       = value;
-	let mut str_u8: [u8; 10] = [0; 10];
+	let mut str_u8: [u8; 12] = [0; 12];
 
 	let mut da: usize = str_u8.len()-1;
-	for _d in 0..digit {
+	(0..digit).for_each(|_| {
 		str_u8[da]   = ALPHABET[(value & BASE_MAX) as usize];
 		value      >>= BASE_BITS;
 		da -= 1;
-	}
+	});
+
+	str_u8[da] = SEPARATOR;
 
 	//println!("{:?}", str_u8);
-	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8.to_vec());
+	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8[da..].to_vec());
 	match string {
 		Ok(str) => Ok(str),
 		Err(e) => Err(e),
@@ -98,16 +102,14 @@ fn base64_to_string( digit: u32, value: u32) -> Result<String, std::string::From
 }
 
 
-
 fn main_process(g: &Globals) {
 
-	//for digit in 1..=5 {
-	for digit in 1..=2 {
+	(1..=DIGIT_MAX).for_each(|digit| {
 		let max: u32 = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 		for value in 0..max {
-			let b64 = base64_to_string(digit, value);
-			match b64 {
+
+			match base64_to_suffix(digit, value) {
 				Ok(chaine) => {
 					println!("{}", chaine);
 				}
@@ -115,8 +117,10 @@ fn main_process(g: &Globals) {
 					println!("Erreur de conversion : {:?}", e);
 				}
 			}
+			//dbg	if value > 10 {break;}
+
 		}
-	}
+	});
 }
 
 
@@ -131,4 +135,5 @@ fn main() {
 
 }
 
-//  "aaaa(uint)" 2 true
+
+//	time cargo run "aaaa(uint)" 2 true
