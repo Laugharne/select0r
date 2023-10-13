@@ -3,6 +3,16 @@ use std::process;
 use text_colorizer::*;
 
 
+const SEPARATOR: u8 = '_' as u8;
+
+type  IterateValue           = u32; // u64 !?
+const BASE_NN: IterateValue  = 64;
+const BASE_MAX: IterateValue = BASE_NN-1;
+const BASE_BITS: u32         = BASE_MAX.count_ones();
+
+const DIGIT_MAX: u32 = 2;	// 2 = test / 5 = release
+
+
 //	#[derive(Debug)]
 // this is just going to allow us to use
 // the Standard output a little better
@@ -21,13 +31,6 @@ struct Globals {
 	leading_zero: bool,
 }
 
-const SEPARATOR: u8 = '_' as u8;
-
-const BASE_NN: u32    = 64;
-const BASE_MAX: u32   = BASE_NN-1;
-const BASE_BITS: u32  = BASE_MAX.count_ones();
-
-const DIGIT_MAX: u32 = 2;	// 2 = test / 5 = release
 
 
 fn print_help() {
@@ -78,10 +81,10 @@ fn compute() {
 }
 
 
-fn base64_to_suffix( digit: u32, value: u32) -> Result<String, std::string::FromUtf8Error> {
+fn base64_to_suffix( digit: u32, value: IterateValue) -> Result<String, std::string::FromUtf8Error> {
 	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
-	let mut value: u32       = value;
+	let mut value: IterateValue       = value;
 	let mut str_u8: [u8; 12] = [0; 12];
 
 	let mut da: usize = str_u8.len()-1;
@@ -105,7 +108,7 @@ fn base64_to_suffix( digit: u32, value: u32) -> Result<String, std::string::From
 fn main_process(g: &Globals) {
 
 	(1..=DIGIT_MAX).for_each(|digit| {
-		let max: u32 = 1 << (BASE_BITS*digit);
+		let max: IterateValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 		for value in 0..max {
 
