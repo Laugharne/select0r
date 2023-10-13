@@ -66,7 +66,7 @@ fn init_app() -> Globals {
 	let part_n: &str = &args[0][..parenthesis];
 	let part_a: &str = &args[0][parenthesis..];
 
-	let digit: u32 = f64::log(IterateValue::MAX as f64, BASE_NN as f64) as u32;
+	let _digit: u32 = f64::log(IterateValue::MAX as f64, BASE_NN as f64) as u32;
 
 	Globals {
 		signature   : args[0].clone(),
@@ -125,7 +125,7 @@ fn main_process(g: &Globals) {
 					println!("Erreur de conversion : {:?}", e);
 				}
 			}
-			//if value > 10 {break;}
+			if value > 10 {break;}
 
 		}
 	});
@@ -136,7 +136,7 @@ fn main() {
 	let g: Globals = init_app();
 
 	//println!("{:?}", g);
-
+	//println!("** {}", num_cpus::get());
 	main_process( &g);
 
 	process::exit(0);
