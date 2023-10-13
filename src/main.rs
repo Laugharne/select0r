@@ -1,5 +1,6 @@
 use std::env;
 use std::process;
+use std::f64;
 use text_colorizer::*;
 
 
@@ -10,7 +11,7 @@ const BASE_NN: IterateValue  = 64;
 const BASE_MAX: IterateValue = BASE_NN-1;
 const BASE_BITS: u32         = BASE_MAX.count_ones();
 
-const DIGIT_MAX: u32 = 2;	// 2 = test / 5 = release
+//const DIGIT_MAX: u32 = 2;	// 2 = test / 5 = release
 
 
 //	#[derive(Debug)]
@@ -28,6 +29,7 @@ struct Globals {
 	part_args   : String,
 	difficulty  : u32,
 	nn_threads  : u32,
+	digit_max   : u32,
 	leading_zero: bool,
 }
 
@@ -46,7 +48,7 @@ fn print_help() {
 }
 
 
-fn parse_args() -> Globals {
+fn init_app() -> Globals {
 	let args: Vec<String> = env::args().skip(1).collect();
 	//println!("{:?}", args);
 	if args.len() != 3 {
@@ -64,12 +66,15 @@ fn parse_args() -> Globals {
 	let part_n: &str = &args[0][..parenthesis];
 	let part_a: &str = &args[0][parenthesis..];
 
-	Globals{
+	let digit: u32 = f64::log(IterateValue::MAX as f64, BASE_NN as f64) as u32;
+
+	Globals {
 		signature   : args[0].clone(),
 		part_name   : part_n.to_owned(),
 		part_args   : part_a.to_owned(),
 		difficulty  : args[1].parse::<u32>().unwrap(),
 		nn_threads  : 0,
+		digit_max   : 2,//digit+1,
 		leading_zero: match &*args[2] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
 	}
 
@@ -107,7 +112,7 @@ fn base64_to_suffix( digit: u32, value: IterateValue) -> Result<String, std::str
 
 fn main_process(g: &Globals) {
 
-	(1..=DIGIT_MAX).for_each(|digit| {
+	(1..=g.digit_max).for_each(|digit| {
 		let max: IterateValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 		for value in 0..max {
@@ -120,7 +125,7 @@ fn main_process(g: &Globals) {
 					println!("Erreur de conversion : {:?}", e);
 				}
 			}
-			//dbg	if value > 10 {break;}
+			//if value > 10 {break;}
 
 		}
 	});
@@ -128,7 +133,7 @@ fn main_process(g: &Globals) {
 
 
 fn main() {
-	let g: Globals = parse_args();
+	let g: Globals = init_app();
 
 	//println!("{:?}", g);
 
@@ -138,5 +143,21 @@ fn main() {
 
 }
 
+/*
+
+
+use std::f64;
+
+fn main() {
+	let valeur: f64 = 64.0; // Exemple de valeur numérique
+
+	// Calcul du logarithme en base 64
+	let log_base_64 = f64::log(valeur, 64.0);
+
+	println!("Le logarithme en base 64 de {} est : {}",
+		valeur, (log_base_64 as u32)+1);
+}
+
+*/
 
 //	time cargo run "aaaa(uint)" 2 true
