@@ -5,6 +5,7 @@ use std::env;
 use std::process;
 use std::f64;
 use crypto::digest::Digest;
+use self::crypto::sha3::Sha3;
 use text_colorizer::*;
 
 
@@ -12,8 +13,6 @@ type  IteratedValue           = u64;
 const BASE_NN: IteratedValue  = 64;
 const BASE_MAX: IteratedValue = BASE_NN-1;
 const BASE_BITS: u32          = BASE_MAX.count_ones();
-
-const SEPARATOR: u8 = '_' as u8;
 
 
 
@@ -34,8 +33,8 @@ struct Globals {
 	nn_threads  : u32,
 	digit_max   : u32,
 	leading_zero: bool,
+	//hasher      : crypto::sha3::Sha3, 
 }
-
 
 
 fn print_help() {
@@ -84,12 +83,7 @@ fn init_app() -> Globals {
 }
 
 
-fn compute() {
-
-}
-
-
-fn base64_to_suffix( digit: u32, value: IteratedValue) -> Result<String, std::string::FromUtf8Error> {
+fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::string::FromUtf8Error> {
 	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
 	let mut value: IteratedValue = value;
@@ -102,7 +96,7 @@ fn base64_to_suffix( digit: u32, value: IteratedValue) -> Result<String, std::st
 		da -= 1;
 	});
 
-	str_u8[da] = SEPARATOR;
+	da += 1;
 
 	//println!("{:?}", str_u8);
 	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8[da..].to_vec());
@@ -113,26 +107,40 @@ fn base64_to_suffix( digit: u32, value: IteratedValue) -> Result<String, std::st
 }
 
 
+fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) {
+	let value64: String   = base64_to_string(digit, value).unwrap();
+	let signature: String = format!("{}_{}{}",g.part_name ,value64, g.part_args );
+
+	hasher.reset();
+	hasher.input_str(&signature);
+	let mut selector_vu8: [u8; 32] = [0; 32];
+	hasher.result(&mut selector_vu8);
+
+	let mut zero_counter = (&selector_vu8[..4]).iter().filter(|&&x| x == 0).count();
+
+	let selector_u32: u32   = ((selector_vu8[0] as u32) << 24)
+							+ ((selector_vu8[1] as u32) << 16)
+							+ ((selector_vu8[2] as u32) << 8)
+							+   selector_vu8[3] as u32;
+
+	println!("{:>8x}\t{}\t{}", selector_u32, signature, zero_counter);
+	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_vu8[..4]);
+}
+
+
 fn main_process(g: &Globals) {
+
+	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
 
 	(1..=g.digit_max).for_each( |digit| {
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
+		//(0..max).for_each( |value| {
 		for value in 0..max {	// still use `for in` for the moment to use `break` instruction (at the end of the loop)
-
-			match base64_to_suffix(digit, value) {
-				Ok(chaine) => {
-					println!("{}", chaine);
-				}
-				Err(e) => {
-					println!("Erreur de conversion : {:?}", e);
-				}
-			}
-
-			if value > 18 {break;}
-
+			compute(g, hasher, digit, value);
+			//if value > 20 {break;}	// just for debug purpose !
 		//});
 		}
 	});
@@ -144,7 +152,7 @@ fn main() {
 
 	println!("{:?}", g);
 
-	
+	/*
 	let mut hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
 	let signature: &str = "deposit278591A(uint)";
 	hasher.input_str(&signature);
@@ -157,7 +165,7 @@ fn main() {
 	let mut out: [u8; 32]     = [0; 32];
 	hasher.result(&mut out);
 	println!("{:?}", &out[..4]);
-	
+	*/
 
 	main_process( &g);
 
