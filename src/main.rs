@@ -145,22 +145,18 @@ fn main() {
 	println!("{:?}", g);
 
 	
-	let mut hasher = crypto::sha3::Sha3::keccak256();
-	let signature = "deposit278591A(uint)";
+	let mut hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
+	let signature: &str = "deposit278591A(uint)";
 	hasher.input_str(&signature);
-	let hash_result = hasher.result_str();
+	let hash_result: String = hasher.result_str();
 	assert_eq!(&hash_result[..8], "00000070");
 	println!("{}\t{}", &hash_result[..8], signature);
 
-	//let mut hasher = crypto::sha3::Sha3::keccak256();
 	hasher.reset();
-	let signature = "mint(uint256,address)";
 	hasher.input_str(&signature);
-	let hash_result = hasher.result_str();
-	//let mut out: [u8; 32]     = [0; 32];
-	//hasher.result(&mut out);
-	assert_eq!(&hash_result[..8], "94bf804d");
-	println!("{}\t{}", &hash_result[..8], signature);
+	let mut out: [u8; 32]     = [0; 32];
+	hasher.result(&mut out);
+	println!("{:?}", &out[..4]);
 	
 
 	main_process( &g);
