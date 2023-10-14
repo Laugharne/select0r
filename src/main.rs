@@ -116,7 +116,7 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) {
 	let mut selector_vu8: [u8; 32] = [0; 32];
 	hasher.result(&mut selector_vu8);
 
-	let mut zero_counter = (&selector_vu8[..4]).iter().filter(|&&x| x == 0).count();
+	let zero_counter: usize = (&selector_vu8[..4]).iter().filter(|&&x| x == 0).count();
 
 	let selector_u32: u32   = ((selector_vu8[0] as u32) << 24)
 							+ ((selector_vu8[1] as u32) << 16)
