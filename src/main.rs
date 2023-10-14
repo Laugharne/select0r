@@ -9,7 +9,7 @@ use self::crypto::sha3::Sha3;
 use text_colorizer::*;
 
 
-type  IteratedValue           = u64;
+type  IteratedValue           = u32;	//u64;
 const BASE_NN: IteratedValue  = 64;
 const BASE_MAX: IteratedValue = BASE_NN-1;
 const BASE_BITS: u32          = BASE_MAX.count_ones();
@@ -33,7 +33,6 @@ struct Globals {
 	nn_threads  : u32,
 	digit_max   : u32,
 	leading_zero: bool,
-	//hasher      : crypto::sha3::Sha3, 
 }
 
 
@@ -140,7 +139,7 @@ fn main_process(g: &Globals) {
 		//(0..max).for_each( |value| {
 		for value in 0..max {	// still use `for in` for the moment to use `break` instruction (at the end of the loop)
 			compute(g, hasher, digit, value);
-			//if value > 20 {break;}	// just for debug purpose !
+			if value > 20 {break;}	// just for debug purpose !
 		//});
 		}
 	});
