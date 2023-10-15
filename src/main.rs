@@ -38,7 +38,7 @@ struct Globals {
 	digit_max   : u32,
 	leading_zero: bool,
 	results     : Vec<Signature>,
-	max_results  : u32,
+	max_results : u32,
 }
 
 
@@ -46,6 +46,7 @@ struct Globals {
 struct Signature {
 	signature : String,
 	selector  : u32,
+	nn_zero   : u32,
 }
 
 
@@ -96,7 +97,6 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 	for i in 0..4 {
 		if selector_u8_vec[i] == 0 {
 			zero_counter += 1;
-		} else {
 		}
 
 		selector_u32 = (selector_u32<<8) + (selector_u8_vec[i] as u32);
@@ -109,7 +109,8 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 
 	Some( Signature {
 		signature: signature,
-		selector:  selector_u32
+		selector:  selector_u32,
+		nn_zero:   zero_counter,
 	})
 
 }
@@ -124,20 +125,25 @@ fn main_process(mut g: Globals) {
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 
-		println!("Brut force, pass #{}", digit);
+		println!("Brute force, pass #{}", digit);
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
 		(0..max).for_each( |value| {
 			match compute(&g, hasher, digit, value) {
 				None => {},
 				Some(s) => {
-					if (g.leading_zero == true) && (s.selector < optimal) {
-						optimal = s.selector;
+					if (g.leading_zero == true) {
+						if (s.selector < optimal) {
+							optimal = s.selector;
+							println!("  [{:>08x}]\t{}", s.selector, s.signature);
+							g.results.push( s);
+						}
+					} else {
 						println!("  [{:>08x}]\t{}", s.selector, s.signature);
 						g.results.push( s);
-						if g.results.len() >= g.max_results as usize {
-							write_tsv(&g);
-							process::exit(0);
-						}
+					}
+					if g.results.len() >= g.max_results as usize {
+						write_tsv(&g);
+						process::exit(0);
 					}
 				}
 			};
@@ -149,7 +155,7 @@ fn main_process(mut g: Globals) {
 
 
 fn write_tsv(mut g: &Globals) {
-	let file_name: String = format!("{}__zero-{}_max-{}.tsv", g.signature, g.difficulty, g.max_results);
+	let file_name: String = format!("{}--zero={}-max={}.tsv", g.signature, g.difficulty, g.max_results);
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
@@ -212,10 +218,8 @@ fn init_app() -> Globals {
 
 fn main() {
 	let mut g: Globals = init_app();
-
 	//println!("{:?}", g);
 	main_process( g);
-
 	process::exit(0);
 
 }
