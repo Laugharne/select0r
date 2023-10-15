@@ -9,6 +9,9 @@ use crypto::digest::Digest;
 use self::crypto::sha3::Sha3;
 use text_colorizer::*;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 
 type  IteratedValue           = u32;	//u64;
 const BASE_NN: IteratedValue  = 64;
@@ -33,61 +36,16 @@ struct Globals {
 	difficulty  : u32,
 	nn_threads  : u32,
 	digit_max   : u32,
-	//optimal     : u32,
 	leading_zero: bool,
+	results     : Vec<Signature>,
+	max_results  : u32,
 }
 
 
+#[derive(Debug)]
 struct Signature {
 	signature : String,
 	selector  : u32,
-}
-
-
-fn print_help() {
-	// eprintln
-	// equivalent to println!() except the output goes to
-	// standard err (stderr) instead of standard output (stdio)
-	eprintln!(
-		"\n{} - find better EVM function name to optimize Gas cost",
-		"Selector Optimizer".green()
-	);
-	eprintln!("Usage :   <function_signature string> <difficulty number> <leading_zero boolean>");
-	eprintln!("Example : \"functionName(uint)\" 2 true");
-}
-
-
-fn init_app() -> Globals {
-	let args: Vec<String> = env::args().skip(1).collect();
-	//println!("{:?}", args);
-	if args.len() != 3 {
-		print_help();
-		eprintln!(
-			"{} wrong number of Globals give. Expected 3, got {}\n",
-			"Error".red().bold(),
-			args.len()
-		);
-
-		process::exit(1);
-	}
-
-	let parenthesis: usize = args[0].find("(").unwrap();
-	let part_n: &str = &args[0][..parenthesis];
-	let part_a: &str = &args[0][parenthesis..];
-
-	let _digit: u32 = f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32;
-
-	Globals {
-		signature   : args[0].clone(),
-		part_name   : part_n.to_owned(),
-		part_args   : part_a.to_owned(),
-		difficulty  : args[1].parse::<u32>().unwrap(),
-		nn_threads  : num_cpus::get() as u32,
-		digit_max   : _digit+1,
-		//optimal     : u32::MAX,
-		leading_zero: match &*args[2] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
-	}
-
 }
 
 
@@ -116,7 +74,7 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 
 
 
-fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue, mut optimal: u32) -> Option<Signature> {
+fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> Option<Signature> {
 	let value64: String   = base64_to_string(digit, value).unwrap();
 	let signature: String = format!("{}_{}{}",g.part_name ,value64, g.part_args );
 
@@ -157,7 +115,7 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue, mut 
 }
 
 
-fn main_process(g: &Globals) {
+fn main_process(mut g: Globals) {
 
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
 	let mut optimal: u32  = u32::MAX;
@@ -166,50 +124,109 @@ fn main_process(g: &Globals) {
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 
+		println!("Brut force, pass #{}", digit);
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
-		//(0..max).for_each( |value| {
-		for value in 0..max {	// still use `for in` for the moment to use `break` instruction (at the end of the loop)
-			match compute(g, hasher, digit, value, optimal) {
+		(0..max).for_each( |value| {
+			match compute(&g, hasher, digit, value) {
 				None => {},
 				Some(s) => {
-					if s.selector >= optimal {continue;}
-					optimal = s.selector;
-					println!("{:>8x}\t{}", s.selector, s.signature);
+					if (g.leading_zero == true) && (s.selector < optimal) {
+						optimal = s.selector;
+						println!("  [{:>8x}]\t{}", s.selector, s.signature);
+						g.results.push( s);
+						if g.results.len() >= g.max_results as usize {
+							write_tsv(&g);
+							process::exit(0);
+						}
+					}
 				}
 			};
 			//if value > 20 {break;}	// just for debug purpose !
-		//});
-		}
+		});
+		println!("");
 	});
 }
 
 
+fn write_tsv(mut g: &Globals) {
+	let file_name: String = format!("{}__zero-{}_max-{}.tsv", g.signature, g.difficulty, g.max_results);
+	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
+	match csv_file {
+		Ok(ref mut f) => {
+			for line in &g.results {
+				let line_csv: String = format!("{}\t{}\n", line.selector, line.signature);
+				let _ = f.write(line_csv.as_bytes());
+			}
+		},
+		Err(_e) => panic!(),
+	}
+
+}
+
+fn print_help() {
+	// eprintln
+	// equivalent to println!() except the output goes to
+	// standard err (stderr) instead of standard output (stdio)
+	eprintln!(
+		"\n{} - find better EVM function name to optimize Gas cost",
+		"Selector Optimizer".green()
+	);
+	eprintln!("Usage :   <function_signature string> <difficulty number> <leading_zero boolean>");
+	eprintln!("Example : \"functionName(uint)\" 2 true");
+}
+
+
+fn init_app() -> Globals {
+	let args: Vec<String> = env::args().skip(1).collect();
+	//println!("{:?}", args);
+	if args.len() != 4 {
+		print_help();
+		eprintln!(
+			"{} wrong number of Globals give. Expected 4, got {}\n",
+			"Error".red().bold(),
+			args.len()
+		);
+
+		process::exit(1);
+	}
+
+	let parenthesis: usize = args[0].find("(").unwrap();
+	let part_n: &str = &args[0][..parenthesis];
+	let part_a: &str = &args[0][parenthesis..];
+	let _digit: u32  = f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32;
+
+	Globals {
+		signature   : args[0].clone(),
+		part_name   : part_n.to_owned(),
+		part_args   : part_a.to_owned(),
+		difficulty  : args[1].parse::<u32>().unwrap(),
+		nn_threads  : num_cpus::get() as u32,
+		digit_max   : _digit+1,
+		leading_zero: match &*args[3] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
+		results     : vec![],
+		max_results	: args[2].parse::<u32>().unwrap(),
+	}
+
+}
+
+
 fn main() {
-	let g: Globals = init_app();
+	let mut g: Globals = init_app();
 
-	println!("{:?}", g);
-
-	/*
-	let mut hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
-	let signature: &str = "deposit278591A(uint)";
-	hasher.input_str(&signature);
-	let hash_result: String = hasher.result_str();
-	assert_eq!(&hash_result[..8], "00000070");
-	println!("{}\t{}", &hash_result[..8], signature);
-
-	hasher.reset();
-	hasher.input_str(&signature);
-	let mut out: [u8; 32]     = [0; 32];
-	hasher.result(&mut out);
-	println!("{:?}", &out[..4]);
-	*/
-
-	main_process( &g);
+	//println!("{:?}", g);
+	main_process( g);
 
 	process::exit(0);
 
 }
 
 
-//	time cargo run "aaaa(uint)" 2 true
-//	time cargo run "aaaa(uint)" 1 true
+//	time cargo run "aaaa(uint)" 2 10 true
+//	time cargo run "aaaa(uint)" 1 10 true
+
+// TODO later !
+//	time cargo run s "aaaa(uint)" z 1 l true t 3
+//					s signature
+//					z (nbr zero)
+//					l leading zero
+//					t nbr of threads (clamp by app)
