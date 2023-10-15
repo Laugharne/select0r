@@ -132,7 +132,7 @@ fn main_process(mut g: Globals) {
 				Some(s) => {
 					if (g.leading_zero == true) && (s.selector < optimal) {
 						optimal = s.selector;
-						println!("  [{:>8x}]\t{}", s.selector, s.signature);
+						println!("  [{:>08x}]\t{}", s.selector, s.signature);
 						g.results.push( s);
 						if g.results.len() >= g.max_results as usize {
 							write_tsv(&g);
@@ -154,7 +154,7 @@ fn write_tsv(mut g: &Globals) {
 	match csv_file {
 		Ok(ref mut f) => {
 			for line in &g.results {
-				let line_csv: String = format!("{}\t{}\n", line.selector, line.signature);
+				let line_csv: String = format!("{:>08x}\t{}\n", line.selector, line.signature);
 				let _ = f.write(line_csv.as_bytes());
 			}
 		},
