@@ -2,6 +2,7 @@ extern crate num_cpus;
 extern crate crypto;
 
 use std::env;
+use std::error::Error;
 use std::process;
 use std::f64;
 use crypto::digest::Digest;
@@ -32,7 +33,14 @@ struct Globals {
 	difficulty  : u32,
 	nn_threads  : u32,
 	digit_max   : u32,
+	//optimal     : u32,
 	leading_zero: bool,
+}
+
+
+struct Signature {
+	signature : String,
+	selector  : u32,
 }
 
 
@@ -75,7 +83,8 @@ fn init_app() -> Globals {
 		part_args   : part_a.to_owned(),
 		difficulty  : args[1].parse::<u32>().unwrap(),
 		nn_threads  : num_cpus::get() as u32,
-		digit_max   : 2,//digit+1,
+		digit_max   : _digit+1,
+		//optimal     : u32::MAX,
 		leading_zero: match &*args[2] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
 	}
 
@@ -106,37 +115,52 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 }
 
 
-fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) {
+
+fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue, mut optimal: u32) -> Option<Signature> {
 	let value64: String   = base64_to_string(digit, value).unwrap();
 	let signature: String = format!("{}_{}{}",g.part_name ,value64, g.part_args );
 
 	hasher.reset();
 	hasher.input_str(&signature);
-	let mut selector_vu8: [u8; 32] = [0; 32];
-	hasher.result(&mut selector_vu8);
-
-	let zero_counter: usize = (&selector_vu8[..4]).iter().filter(|&&x| x == 0).count();
-	//let leading_zero = (&selector_vu8[..4]).iter().take_while ;
-	//let leading_zero = (&selector_vu8[..4]).iter().take_while ;
+	let mut selector_u8_vec: [u8; 32] = [0; 32];
+	hasher.result(&mut selector_u8_vec);
+/*
+	let zero_counter: usize   = (&selector_u8_vec[..4]).iter().filter(|&&x| x == 0).count();
 	let mut leading_zero: u32 = 0;
-	// for &item in selector_vu8[..4].iter().take_while(|&&x| leading_zero < g.difficulty) {
-	// 	if item == 0 {leading_zero += 1;}
-	// }
-	// TODO
 
-	let selector_u32: u32   = ((selector_vu8[0] as u32) << 24)
-							+ ((selector_vu8[1] as u32) << 16)
-							+ ((selector_vu8[2] as u32) << 8)
-							+   selector_vu8[3] as u32;
+	let selector_u32: u32   = ((selector_u8_vec[0] as u32) << 24)
+							+ ((selector_u8_vec[1] as u32) << 16)
+							+ ((selector_u8_vec[2] as u32) << 8)
+							+   selector_u8_vec[3] as u32;
+*/
+	let mut zero_counter: u32 = 0;
+	let mut selector_u32: u32 = 0;
+	for i in 0..4 {
+		if selector_u8_vec[i] == 0 {
+			zero_counter += 1;
+		} else {
+		}
 
-	println!("{:>8x}\t{}\t{}", selector_u32, signature, zero_counter);
-	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_vu8[..4]);
+		selector_u32 = (selector_u32<<8) + (selector_u8_vec[i] as u32);
+	}
+
+	if selector_u32 == 0 {return None;}
+	if zero_counter < g.difficulty {return None;}
+
+	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
+
+	Some( Signature {
+		signature: signature,
+		selector:  selector_u32
+	})
+
 }
 
 
 fn main_process(g: &Globals) {
 
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
+	let mut optimal: u32  = u32::MAX;
 
 	(1..=g.digit_max).for_each( |digit| {
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
@@ -145,8 +169,15 @@ fn main_process(g: &Globals) {
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
 		//(0..max).for_each( |value| {
 		for value in 0..max {	// still use `for in` for the moment to use `break` instruction (at the end of the loop)
-			compute(g, hasher, digit, value);
-			if value > 20 {break;}	// just for debug purpose !
+			match compute(g, hasher, digit, value, optimal) {
+				None => {},
+				Some(s) => {
+					if s.selector >= optimal {continue;}
+					optimal = s.selector;
+					println!("{:>8x}\t{}", s.selector, s.signature);
+				}
+			};
+			//if value > 20 {break;}	// just for debug purpose !
 		//});
 		}
 	});
@@ -181,3 +212,4 @@ fn main() {
 
 
 //	time cargo run "aaaa(uint)" 2 true
+//	time cargo run "aaaa(uint)" 1 true
