@@ -272,12 +272,12 @@ fn init_app() -> Globals {
 	}
 
 	println!("");
-	println!("- Signature\t{}",   arg_signature.bold());
-	println!("- Difficulty\t{}",  arg_difficulty);
-	println!("- Max results\t{}", arg_max_results);
-	println!("- Decrease\t{}",    arg_decrease);
-	println!("- Nbr threads\t{}", arg_threads);
-	println!("- Output\t{:?}",    arg_output);
+	println!("- Signature\t`{}`",        arg_signature);
+	println!("- Difficulty\t{} zero(s)", arg_difficulty);
+	println!("- Max results\t{}",        arg_max_results);
+	println!("- Decrease\t{}",           arg_decrease);
+	println!("- Nbr threads\t{} CPU(s)", arg_threads);
+	println!("- Output\t{:?} format",    arg_output);
 	println!("");
 
 	let parenthesis: usize = arg_signature.find("(").unwrap();
