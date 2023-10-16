@@ -1,6 +1,5 @@
 # Select0r
 
-
 <!-- TOC -->
 
 - [Select0r](#select0r)
@@ -10,9 +9,8 @@
 
 <!-- /TOC -->
 
-Find better **EVM function name** to optimize Gas cost !
-
 **TODO**
+
 
 ## Install Rust
 [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)

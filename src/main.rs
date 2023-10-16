@@ -26,6 +26,7 @@ enum Output {
 	JSON,
 }
 
+
 //	#[derive(Debug)]
 // this is just going to allow us to use
 // the Standard output a little better
@@ -150,7 +151,7 @@ fn main_process(mut g: Globals) {
 					}
 
 					if g.results.len() >= g.max_results as usize {
-						write_tsv(&g);
+						write_file(&g);
 						process::exit(0);
 					}
 				}
@@ -162,15 +163,31 @@ fn main_process(mut g: Globals) {
 }
 
 
-fn write_tsv(mut g: &Globals) {
-	let file_name: String = format!("{}--zero={}-max={}-decr={}-cpu={}.tsv", g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads);
+fn write_file(mut g: &Globals) {
+	let file_name: String = format!("{}--zero={}-max={}-decr={}-cpu={}.{:?}", g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
+			match g.output {
+				Output::JSON => {let _ = f.write("{\n".as_bytes());},
+				_ => {},
+			}
+
 			for line in &g.results {
-				let line_csv: String = format!("{:>08x}\t{}\n", line.selector, line.signature);
+				//let line_csv: String = format!("{:>08x}\t{}\n", line.selector, line.signature);
+				let line_csv: String = match g.output {
+					Output::TSV  =>	format!("{:>08x}\t{}\n", line.selector, line.signature),
+					Output::CSV  =>	format!("\"{:>08x}\",\"{}\"\n", line.selector, line.signature),
+					Output::JSON =>	format!("\t{{ \"selector\":\"{:>08x}\", \"signature\":\"{}\" }},\n", line.selector, line.signature),
+				};
 				let _ = f.write(line_csv.as_bytes());
 			}
+
+			match g.output {
+				Output::JSON => {let _ = f.write("}\n".as_bytes());},
+				_ => {},
+			}
+
 		},
 		Err(_e) => panic!(),
 	}
