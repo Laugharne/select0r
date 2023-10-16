@@ -2,7 +2,7 @@ extern crate num_cpus;
 extern crate crypto;
 
 use std::env;
-use std::error::Error;
+//use std::error::Error;
 use std::process;
 use std::f64;
 use crypto::digest::Digest;
@@ -36,7 +36,7 @@ struct Globals {
 	difficulty  : u32,
 	nn_threads  : u32,
 	digit_max   : u32,
-	leading_zero: bool,
+	decrease    : bool,
 	results     : Vec<Signature>,
 	max_results : u32,
 }
@@ -131,14 +131,14 @@ fn main_process(mut g: Globals) {
 			match compute(&g, hasher, digit, value) {
 				None => {},
 				Some(s) => {
-					if (g.leading_zero == true) {
-						if (s.selector < optimal) {
+					if g.decrease == true {
+						if s.selector < optimal {
 							optimal = s.selector;
-							println!("  [{:>08x}]\t{}", s.selector, s.signature);
+							println!("  [{:>08X}]\t{}", s.selector, s.signature);
 							g.results.push( s);
 						}
 					} else {
-						println!("  [{:>08x}]\t{}", s.selector, s.signature);
+						println!("  [{:>08X}]\t{}", s.selector, s.signature);
 						g.results.push( s);
 					}
 					if g.results.len() >= g.max_results as usize {
@@ -155,7 +155,7 @@ fn main_process(mut g: Globals) {
 
 
 fn write_tsv(mut g: &Globals) {
-	let file_name: String = format!("{}--zero={}-max={}.tsv", g.signature, g.difficulty, g.max_results);
+	let file_name: String = format!("{}--zero={}-max={}-decr={}.tsv", g.signature, g.difficulty, g.max_results, g.decrease);
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
@@ -174,15 +174,17 @@ fn print_help() {
 	// equivalent to println!() except the output goes to
 	// standard err (stderr) instead of standard output (stdio)
 	eprintln!(
-		"\n{} - find better EVM function name to optimize Gas cost",
-		"Selector Optimizer".green()
+		"\n{} - Selector Optimizer, find better EVM function name to optimize Gas cost",
+		"Select0r".green().bold()
 	);
-	eprintln!("Usage :   <function_signature string> <difficulty number> <leading_zero boolean>");
-	eprintln!("Example : \"functionName(uint)\" 2 true");
+	eprintln!("Usage   : <function_signature string> <difficulty number> <max_results> <decrement boolean>");
+	eprintln!("Example : \"functionName(uint)\" 2 4 true");
 }
 
 
 fn init_app() -> Globals {
+
+	// manage cli parameters
 	let args: Vec<String> = env::args().skip(1).collect();
 	//println!("{:?}", args);
 	if args.len() != 4 {
@@ -208,7 +210,7 @@ fn init_app() -> Globals {
 		difficulty  : args[1].parse::<u32>().unwrap(),
 		nn_threads  : num_cpus::get() as u32,
 		digit_max   : _digit+1,
-		leading_zero: match &*args[3] {"true"=>true, "false"=>false, _=>panic!("invalid leading zero value")},
+		decrease    : match &*args[3] {"true"=>true, "false"=>false, _=>panic!("Invalid decrease value")},
 		results     : vec![],
 		max_results	: args[2].parse::<u32>().unwrap(),
 	}
@@ -229,8 +231,8 @@ fn main() {
 //	time cargo run "aaaa(uint)" 1 10 true
 
 // TODO later !
-//	time cargo run s "aaaa(uint)" z 1 l true t 3
+//	time cargo run s "aaaa(uint)"  z 1  d true  t 3
 //					s signature
 //					z (nbr zero)
-//					l leading zero
+//					d decrease values
 //					t nbr of threads (clamp by app)
