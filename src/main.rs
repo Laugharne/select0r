@@ -19,6 +19,12 @@ const BASE_MAX: IteratedValue = BASE_NN-1;
 const BASE_BITS: u32          = BASE_MAX.count_ones();
 
 
+#[derive(Debug)]
+enum Output {
+	TSV,
+	CSV,
+	JSON,
+}
 
 //	#[derive(Debug)]
 // this is just going to allow us to use
@@ -30,23 +36,24 @@ const BASE_BITS: u32          = BASE_MAX.count_ones();
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Globals {
-	signature   : String,
-	part_name   : String,
-	part_args   : String,
-	difficulty  : u32,
-	nn_threads  : u32,
-	digit_max   : u32,
-	decrease    : bool,
-	results     : Vec<Signature>,
-	max_results : u32,
+	signature  : String,
+	part_name  : String,
+	part_args  : String,
+	difficulty : u32,
+	nn_threads : u32,
+	digit_max  : u32,
+	decrease   : bool,
+	results    : Vec<Signature>,
+	max_results: u32,
+	output     : Output,
 }
 
 
 #[derive(Debug)]
 struct Signature {
-	signature : String,
-	selector  : u32,
-	nn_zero   : u32,
+	signature: String,
+	selector : u32,
+	nn_zero  : u32,
 }
 
 
@@ -109,8 +116,8 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 
 	Some( Signature {
 		signature: signature,
-		selector:  selector_u32,
-		nn_zero:   zero_counter,
+		selector : selector_u32,
+		nn_zero  : zero_counter,
 	})
 
 }
@@ -141,6 +148,7 @@ fn main_process(mut g: Globals) {
 						println!("  [{:>08X}]\t{}", s.selector, s.signature);
 						g.results.push( s);
 					}
+
 					if g.results.len() >= g.max_results as usize {
 						write_tsv(&g);
 						process::exit(0);
@@ -155,7 +163,7 @@ fn main_process(mut g: Globals) {
 
 
 fn write_tsv(mut g: &Globals) {
-	let file_name: String = format!("{}--zero={}-max={}-decr={}.tsv", g.signature, g.difficulty, g.max_results, g.decrease);
+	let file_name: String = format!("{}--zero={}-max={}-decr={}-cpu={}.tsv", g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads);
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
@@ -177,20 +185,38 @@ fn print_help() {
 		"\n{} - Selector Optimizer, find better EVM function name to optimize Gas cost",
 		"Select0r".green().bold()
 	);
-	eprintln!("Usage   : <function_signature string> <difficulty number> <max_results> <decrement boolean>");
-	eprintln!("Example : \"functionName(uint)\" 2 4 true");
+	eprintln!("Usage : select0r s <function_signature string> z <number_of_zeros> r <max_results> d <decrement boolean> t <nbr_threads> o <format_ouput>");
+	eprintln!("");
+	eprintln!("Example 1 : select0r s \"functionName(uint256)\"  z 2  r 5  d true  t 2  o tsv");
+	eprintln!("Example 2 : select0r s \"functionName2(uint)\"  z 2  r 7  d false  t 2  o json");
 }
 
 
 fn init_app() -> Globals {
 
+	println!("");
+	println!(":'######::'########:'##:::::::'########::'######::'########:::'#####:::'########::");
+	println!("'##... ##: ##.....:: ##::::::: ##.....::'##... ##:... ##..:::'##.. ##:: ##.... ##:");
+	println!(" ##:::..:: ##::::::: ##::::::: ##::::::: ##:::..::::: ##::::'##:::: ##: ##:::: ##:");
+	println!(". ######:: ######::: ##::::::: ######::: ##:::::::::: ##:::: ##:::: ##: ########::");
+	println!(":..... ##: ##...:::: ##::::::: ##...:::: ##:::::::::: ##:::: ##:::: ##: ##.. ##:::");
+	println!("'##::: ##: ##::::::: ##::::::: ##::::::: ##::: ##:::: ##::::. ##:: ##:: ##::. ##::");
+	println!(". ######:: ########: ########: ########:. ######::::: ##:::::. #####::: ##:::. ##:");
+	println!(":......:::........::........::........:::......::::::..:::::::.....::::..:::::..::");
+
 	// manage cli parameters
 	let args: Vec<String> = env::args().skip(1).collect();
-	//println!("{:?}", args);
-	if args.len() != 4 {
+	let mut arg_signature  : String = "".to_string();
+	let mut arg_difficulty : u32    = 2;
+	let mut arg_max_results: u32    = 5;
+	let mut arg_decrease   : bool   = false;
+	let mut arg_threads    : u32    = 2;
+	let mut arg_output     : Output = Output::TSV;
+
+	if (args.len() & 1) != 0 {
 		print_help();
 		eprintln!(
-			"{} wrong number of Globals give. Expected 4, got {}\n",
+			"{} wrong number of parameters given. Got {}\n",
 			"Error".red().bold(),
 			args.len()
 		);
@@ -198,21 +224,78 @@ fn init_app() -> Globals {
 		process::exit(1);
 	}
 
-	let parenthesis: usize = args[0].find("(").unwrap();
-	let part_n: &str = &args[0][..parenthesis];
-	let part_a: &str = &args[0][parenthesis..];
-	let _digit: u32  = f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32;
+	enum NextIs{
+		NOTHING,
+		SIGNATURE,
+		ZERO,
+		RESULTS,
+		DECREASE,
+		THREADS,
+		OUTPUT,
+	}
+
+	let mut next: NextIs = NextIs::NOTHING;
+
+	for arg in &args {
+		//println!("- {}", arg);
+		match next {
+			NextIs::SIGNATURE => { arg_signature   = arg.to_string();},
+			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
+			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().unwrap().clamp(2,20);},
+			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"true"|"TRUE"=>true, "false"|"FALSE"=>false, _=>panic!("Invalid decrease value")};},
+			NextIs::THREADS   => { arg_threads     = arg.parse::<u32>().unwrap().clamp( 1, num_cpus::get() as u32);},
+			NextIs::OUTPUT    => {arg_output = match arg.as_str() {
+									"tsv" |"TSV"|"" => Output::TSV,
+									"csv" |"CSV"    => Output::CSV,
+									"json"|"JSON"   => Output::JSON,
+									_               => panic!("Invalid output value")
+								};},
+			_                 => {},
+		}
+		next = NextIs::NOTHING;
+
+		match arg.as_str() {
+			"s"|"S" => { next = NextIs::SIGNATURE;},
+			"z"|"Z" => { next = NextIs::ZERO;},
+			"r"|"R" => { next = NextIs::RESULTS;},
+			"d"|"D" => { next = NextIs::DECREASE;},
+			"t"|"T" => { next = NextIs::THREADS;},
+			"o"|"O" => { next = NextIs::OUTPUT;},
+			_       => { next = NextIs::NOTHING;/* TODO */},
+		}
+
+	}
+
+	if arg_signature.len() <= 0 {
+		print_help();
+		panic!("No signature !?");
+	}
+
+	println!("");
+	println!("- Signature\t{}",   arg_signature.bold());
+	println!("- Difficulty\t{}",  arg_difficulty);
+	println!("- Max results\t{}", arg_max_results);
+	println!("- Decrease\t{}",    arg_decrease);
+	println!("- Nbr threads\t{}", arg_threads);
+	println!("- Output\t{:?}",    arg_output);
+	println!("");
+
+	let parenthesis: usize = arg_signature.find("(").unwrap();
+	let part_n: &str       = &arg_signature[..parenthesis];
+	let part_a: &str       = &arg_signature[parenthesis..];
+	let digit: u32         = (f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32) + 1;
 
 	Globals {
-		signature   : args[0].clone(),
-		part_name   : part_n.to_owned(),
-		part_args   : part_a.to_owned(),
-		difficulty  : args[1].parse::<u32>().unwrap(),
-		nn_threads  : num_cpus::get() as u32,
-		digit_max   : _digit+1,
-		decrease    : match &*args[3] {"true"=>true, "false"=>false, _=>panic!("Invalid decrease value")},
-		results     : vec![],
-		max_results	: args[2].parse::<u32>().unwrap(),
+		signature  : arg_signature.clone(),
+		part_name  : part_n.to_owned(),
+		part_args  : part_a.to_owned(),
+		difficulty : arg_difficulty,
+		nn_threads : arg_threads,
+		digit_max  : digit,
+		decrease   : arg_decrease,
+		results    : vec![],
+		max_results: arg_max_results,
+		output     : arg_output,
 	}
 
 }
@@ -227,12 +310,10 @@ fn main() {
 }
 
 
-//	time cargo run "aaaa(uint)" 2 10 true
-//	time cargo run "aaaa(uint)" 1 10 true
-
-// TODO later !
+//	time cargo run s "aaaa(uint)"  z 2  d false  t 2
 //	time cargo run s "aaaa(uint)"  z 1  d true  t 3
 //					s signature
 //					z (nbr zero)
+//					r nbr results needed
 //					d decrease values
 //					t nbr of threads (clamp by app)
