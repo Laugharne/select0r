@@ -2,7 +2,6 @@ extern crate num_cpus;
 extern crate crypto;
 
 use std::env;
-//use std::error::Error;
 use std::process;
 use std::f64;
 use crypto::digest::Digest;
@@ -92,9 +91,7 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 	let mut selector_u8_vec: [u8; 32] = [0; 32];
 	hasher.result(&mut selector_u8_vec);
 /*
-	let zero_counter: usize   = (&selector_u8_vec[..4]).iter().filter(|&&x| x == 0).count();
-	let mut leading_zero: u32 = 0;
-
+	let zero_counter: usize = (&selector_u8_vec[..4]).iter().filter(|&&x| x == 0).count();
 	let selector_u32: u32   = ((selector_u8_vec[0] as u32) << 24)
 							+ ((selector_u8_vec[1] as u32) << 16)
 							+ ((selector_u8_vec[2] as u32) << 8)
@@ -174,7 +171,6 @@ fn write_file(mut g: &Globals) {
 			}
 
 			for line in &g.results {
-				//let line_csv: String = format!("{:>08x}\t{}\n", line.selector, line.signature);
 				let line_csv: String = match g.output {
 					Output::TSV  =>	format!("{:>08x}\t{}\n", line.selector, line.signature),
 					Output::CSV  =>	format!("\"{:>08x}\",\"{}\"\n", line.selector, line.signature),
