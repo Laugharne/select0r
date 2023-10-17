@@ -23,6 +23,7 @@ enum Output {
 	TSV,
 	CSV,
 	JSON,
+	XML,
 }
 
 
@@ -130,7 +131,7 @@ fn main_process(mut g: Globals) {
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
 		//println!("{} : {}", digit, max);
 
-		println!("Brute force, pass #{}", digit);
+		print!("Pass #{} : ", digit);
 		//(0..max).step_by(g.nn_threads).for_each( |value| {
 		(0..max).for_each( |value| {
 			match compute(&g, hasher, digit, value) {
@@ -139,11 +140,13 @@ fn main_process(mut g: Globals) {
 					if g.decrease == true {
 						if s.selector < optimal {
 							optimal = s.selector;
-							println!("  [{:>08X}]\t{}", s.selector, s.signature);
+							//println!("  [{:>08X}]\t{}", s.selector, s.signature);
+							print!("■");
 							g.results.push( s);
 						}
 					} else {
-						println!("  [{:>08X}]\t{}", s.selector, s.signature);
+						//println!("  [{:>08X}]\t{}", s.selector, s.signature);
+						print!("■");
 						g.results.push( s);
 					}
 
@@ -157,6 +160,8 @@ fn main_process(mut g: Globals) {
 		});
 		println!("");
 	});
+	println!("");
+
 }
 
 
@@ -165,24 +170,29 @@ fn write_file(mut g: &Globals) {
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
-			match g.output {
-				Output::JSON => {let _ = f.write("{\n".as_bytes());},
-				_ => {},
-			}
+			let format: &str = match g.output {
+				Output::JSON => "{\n",
+				Output::XML  => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n",
+				_ => "",
+			};
+			let _ = f.write(format.as_bytes());
 
 			for line in &g.results {
 				let line_csv: String = match g.output {
 					Output::TSV  =>	format!("{:>08x}\t{}\n", line.selector, line.signature),
 					Output::CSV  =>	format!("\"{:>08x}\",\"{}\"\n", line.selector, line.signature),
 					Output::JSON =>	format!("\t{{ \"selector\":\"{:>08x}\", \"signature\":\"{}\" }},\n", line.selector, line.signature),
+					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 			}
 
-			match g.output {
-				Output::JSON => {let _ = f.write("}\n".as_bytes());},
-				_ => {},
-			}
+			let format: &str = match g.output {
+				Output::JSON => "}\n",
+				Output::XML  => "</select0r>\n",
+				_ => "",
+			};
+			let _ = f.write(format.as_bytes());
 
 		},
 		Err(_e) => panic!(),
@@ -228,7 +238,7 @@ fn init_app() -> Globals {
 	let args: Vec<String> = env::args().skip(1).collect();
 	let mut arg_signature  : String = "".to_string();
 	let mut arg_difficulty : u32    = 2;
-	let mut arg_max_results: u32    = 5;
+	let mut arg_max_results: u32    = 4;
 	let mut arg_decrease   : bool   = false;
 	let mut arg_threads    : u32    = 2;
 	let mut arg_output     : Output = Output::TSV;
@@ -261,13 +271,14 @@ fn init_app() -> Globals {
 		match next {
 			NextIs::SIGNATURE => { arg_signature   = arg.to_string();},
 			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
-			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().unwrap().clamp(2,20);},
-			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"true"|"TRUE"=>true, "false"|"FALSE"=>false, _=>panic!("Invalid decrease value")};},
+			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().unwrap().clamp(2,10);},
+			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid decrease value")};},
 			NextIs::THREADS   => { arg_threads     = arg.parse::<u32>().unwrap().clamp( 1, num_cpus::get() as u32);},
 			NextIs::OUTPUT    => {arg_output = match arg.as_str() {
 									"tsv" |"TSV"|"" => Output::TSV,
 									"csv" |"CSV"    => Output::CSV,
 									"json"|"JSON"   => Output::JSON,
+									"xml" |"XML"    => Output::XML,
 									_               => panic!("Invalid output value")
 								};},
 			_                 => {},
@@ -297,7 +308,7 @@ fn init_app() -> Globals {
 	println!("- Max results\t{}",        arg_max_results);
 	println!("- Decrease\t{}",           arg_decrease);
 	println!("- Nbr threads\t{} CPU(s)", arg_threads);
-	println!("- Output\t{:?} format",    arg_output);
+	println!("- Output\t{:?} file",      arg_output);
 	println!("");
 
 	let parenthesis: usize = arg_signature.find("(").unwrap();
@@ -332,6 +343,7 @@ fn main() {
 
 //	time cargo run s "aaaa(uint)"  z 2  d false  t 2
 //	time cargo run s "aaaa(uint)"  z 1  d true  t 3
+//	time cargo run s "deposit(uint256)"  z 2  d true  t 3 r 8 o tsv
 //					s signature
 //					z (nbr zero)
 //					r nbr results needed
