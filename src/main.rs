@@ -4,12 +4,12 @@ extern crate crypto;
 use std::env;
 use std::process;
 use std::f64;
+use std::fs::File;
+use std::io::prelude::*;
+
 use crypto::digest::Digest;
 use self::crypto::sha3::Sha3;
 use text_colorizer::*;
-
-use std::fs::File;
-use std::io::prelude::*;
 
 
 type  IteratedValue           = u32;	//u64;
