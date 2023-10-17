@@ -52,9 +52,10 @@ struct Globals {
 
 #[derive(Debug)]
 struct Signature {
-	signature: String,
-	selector : u32,
-	nn_zero  : u32,
+	signature   : String,
+	selector    : u32,
+	nn_zero     : u32,
+	leading_zero: u32,
 }
 
 
@@ -107,16 +108,26 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 
 		selector_u32 = (selector_u32<<8) + (selector_u8_vec[i] as u32);
 	}
-
 	if selector_u32 == 0 {return None;}
 	if zero_counter < g.difficulty {return None;}
 
 	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
+	let mut leading_zero: u32 = 0;
+	if selector_u8_vec[0] == 0 {
+		leading_zero += 1;
+		if selector_u8_vec[1] == 0 {
+			leading_zero += 1;
+			if selector_u8_vec[2] == 0 {
+				leading_zero += 1;
+			}
+		}
+	}
 
 	Some( Signature {
-		signature: signature,
-		selector : selector_u32,
-		nn_zero  : zero_counter,
+		signature   : signature,
+		selector    : selector_u32,
+		nn_zero     : zero_counter,
+		leading_zero: leading_zero,
 	})
 
 }
@@ -166,7 +177,8 @@ fn main_process(mut g: Globals) {
 
 
 fn write_file(mut g: &Globals) {
-	let file_name: String = format!("{}--zero={}-max={}-decr={}-cpu={}.{:?}", g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
+	let file_name: String = format!("{}--zero={}-max={}-decr={}-cpu={}.{:?}",
+									g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 	match csv_file {
 		Ok(ref mut f) => {
@@ -179,10 +191,10 @@ fn write_file(mut g: &Globals) {
 
 			for line in &g.results {
 				let line_csv: String = match g.output {
-					Output::TSV  =>	format!("{:>08x}\t{}\n", line.selector, line.signature),
-					Output::CSV  =>	format!("\"{:>08x}\",\"{}\"\n", line.selector, line.signature),
-					Output::JSON =>	format!("\t{{ \"selector\":\"{:>08x}\", \"signature\":\"{}\" }},\n", line.selector, line.signature),
-					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.signature),
+					Output::TSV  =>	format!("{:>08x}\t{}\t{}\n", line.selector, line.leading_zero, line.signature),
+					Output::CSV  =>	format!("\"{:>08x}\",\"{}\",\"{}\"\n", line.selector, line.leading_zero, line.signature),
+					Output::JSON =>	format!("\t{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }},\n", line.selector, line.leading_zero, line.signature),
+					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 			}
