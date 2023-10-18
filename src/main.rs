@@ -60,6 +60,11 @@ struct Signature {
 
 
 fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::string::FromUtf8Error> {
+
+	// An identifier in solidity has to start with a letter, a dollar-sign or an underscore and may
+	// additionally contain numbers after the first symbol.
+	//
+	// https://docs.soliditylang.org/en/develop/grammar.html#a4.SolidityLexer.Identifier
 	const ALPHABET: &[u8; BASE_NN as usize] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
 	let mut value: IteratedValue = value;
@@ -183,6 +188,8 @@ fn write_file(mut g: &Globals) {
 	match csv_file {
 		Ok(ref mut f) => {
 			let format: &str = match g.output {
+				Output::TSV  => "SELECTOR\tLEADING_ZERO\tSIGNATURE\n",
+				Output::CSV  => "\"SELECTOR\",\"LEADING_ZERO\",\"SIGNATURE\"\n",
 				Output::JSON => "{\n",
 				Output::XML  => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n",
 				_ => "",
