@@ -27,7 +27,7 @@ For instance :
 - `sendValue(uint256 amount)` is **invalid**.
 - while `sendValue(uint256)` is the **correct** format.
 
-The gas cost of a function name equals 4 times the number of zero bytes and 16 times the number of non-zero bytes. Therefore, the gas cost ranges from 28 gas (*3 zeros and 1 non-zero*) in the best case to 64 gas (*4 non-zero bytes*) in the worst case.
+The gas cost of a function name equals 4 times the number of zero bytes and 16 times the number of non-zero bytes. Therefore, the gas cost ranges from **28 gas** (*3 zeros and 1 non-zero*) in the best case to **64 gas** (*4 non-zero bytes*) in the worst case.
 
 1. It's important to note that an all-zero function selector won't compile because it conflicts with the fallback function. Consequently, `mint_22F5A30(uint256)` (*0a000000*) is more gas-efficient than `mint(uint256)` (*a0712d68*).
 
