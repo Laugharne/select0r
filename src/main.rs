@@ -54,7 +54,6 @@ struct Globals {
 struct Signature {
 	signature   : String,
 	selector    : u32,
-	nn_zero     : u32,
 	leading_zero: u32,
 }
 
@@ -131,7 +130,6 @@ fn compute(g: &Globals, mut hasher: Sha3, digit: u32, value: IteratedValue) -> O
 	Some( Signature {
 		signature   : signature,
 		selector    : selector_u32,
-		nn_zero     : zero_counter,
 		leading_zero: leading_zero,
 	})
 
