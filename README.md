@@ -71,7 +71,7 @@ Get results for `mint(address)` with `2` lead zeros minimum, `sorted` by selecto
 select0r s "mint(address)"  z 2  d true  t 3  r 4  o xml
 ```
 
-**File :  ** `mint(address)--zero=2-max=4-decr=true-cpu=3.XML`
+**File :** `mint(address)--zero=2-max=4-decr=true-cpu=3.XML`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
