@@ -76,25 +76,25 @@ select0r s "mint(address)"  z 2  d true  t 3  r 4  o xml
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <select0r>
-		<result>
-				<selector>00a08a00</selector>
-				<leading_zero>1</leading_zero>
-				<signature>mint_Yh(address)</signature>
-		</result>
-		<result>
-				<selector>00009e37</selector>
-				<leading_zero>2</leading_zero>
-				<signature>mint_6X1(address)</signature>
-		</result>
-		<result>
-				<selector>000032d8</selector>
-				<leading_zero>2</leading_zero>
-				<signature>mint_AeL(address)</signature>
-		</result>
-		<result>
-				<selector>0000129b</selector>
-				<leading_zero>2</leading_zero>
-				<signature>mint_TWX(address)</signature>
-		</result>
+  <result>
+    <selector>00a08a00</selector>
+    <leading_zero>1</leading_zero>
+    <signature>mint_Yh(address)</signature>
+  </result>
+  <result>
+    <selector>00009e37</selector>
+    <leading_zero>2</leading_zero>
+    <signature>mint_6X1(address)</signature>
+  </result>
+  <result>
+    <selector>000032d8</selector>
+    <leading_zero>2</leading_zero>
+    <signature>mint_AeL(address)</signature>
+  </result>
+  <result>
+    <selector>0000129b</selector>
+    <leading_zero>2</leading_zero>
+    <signature>mint_TWX(address)</signature>
+  </result>
 </select0r>
 ```
