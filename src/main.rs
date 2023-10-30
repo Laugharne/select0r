@@ -204,7 +204,7 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 			nn_results = shared.len();
 		}
 	}
-	println!("BEGIN\t{}\t{:>08X}", idx, optimal);
+	//println!("BEGIN\t{}\t{:>08X}", idx, optimal);
 
 	(idx..max).step_by(g.nn_threads).for_each( |value| {
 		match compute(&g, digit, value, hasher) {
