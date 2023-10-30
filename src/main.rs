@@ -173,17 +173,17 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 }
 
 fn get_leading_zeros(selector_u32: u32) -> u32 {
-    let mut leading_zero: u32 = 0;
-    if (selector_u32 & 0xFF000000) == 0 {
-		    leading_zero += 1;
-		    if (selector_u32 & 0x00FF0000) == 0 {
-			    leading_zero += 1;
-			    if (selector_u32 & 0x0000FF00) == 0 {
-				    leading_zero += 1;
-			    }
-		    }
-	    }
-    leading_zero
+	let mut leading_zero: u32 = 0;
+	if (selector_u32 & 0xFF000000) == 0 {
+		leading_zero += 1;
+		if (selector_u32 & 0x00FF0000) == 0 {
+			leading_zero += 1;
+			if (selector_u32 & 0x0000FF00) == 0 {
+				leading_zero += 1;
+			}
+		}
+	}
+	leading_zero
 }
 
 
