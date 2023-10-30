@@ -145,13 +145,13 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 		)});
 
 	SelectorResult {
-		selector:       selector_u32,
-		zero_counter:   zero_counter,
+		selector    : selector_u32,
+		zero_counter: zero_counter,
 	}
 }
 
 
-fn compute(g: &Globals, digit: u32, value: IteratedValue, mut hasher: Sha3) -> Option<SignatureResult> {
+fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
 	let value64: String     = base64_to_string(digit, value).unwrap();
 	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
 	let s2s: SelectorResult = signature_to_selector(&signature, hasher);
@@ -182,10 +182,10 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, mut hasher: Sha3) -> O
 }
 
 
-fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
+fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
-	let mut optimal:u32            = u32::MAX;                         // REVOIR !
-	let mut nn_results: usize      = 1;                                // REVOIR !
+	let mut optimal:u32            = u32::MAX;                         // À REVOIR !
+	let mut nn_results: usize      = 1;                                // À REVOIR !
 	{
 		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 		if let Some(last_signature) = shared.last() {
@@ -222,12 +222,18 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 								}
 
 							}// if let Some(last_signature)
-						}// SHARED_RESULTS
+						}// SHARED_RESULTS.lock()
 					}
 				} else {
 					//println!("  [{:>08X}]\t{}", s.selector, s.signature);
 					print!("{}", FOUND);
-					g.results.push( s);
+					let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+					shared.push( SignatureResult{
+						signature   : s.signature,
+						selector    : optimal,
+						leading_zero: s.leading_zero,
+					});
+					nn_results = shared.len();
 				}
 
 				if nn_results >= g.max_results as usize {
@@ -461,7 +467,9 @@ fn main() {
 
 
 //	time cargo run s "deposit(uint256)"  z 2  d true  t 3 r 8 o tsv
+//	time cargo run s "deposit(uint256)"  z 2  d true  t 14 r 12 o tsv
 
+//	time ./select0r s "deposit(uint256)"  z 2  d true  t 14 r 15 o tsv
 
 //	time cargo run s "aaaa(uint)"  z 2  d false  t 2
 //	time cargo run s "aaaa(uint)"  z 1  d true  t 3

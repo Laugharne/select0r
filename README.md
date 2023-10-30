@@ -105,7 +105,7 @@ Get results for `mint(address)` signature looking for `2` lead zeros minimum, `s
 ```bash
 select0r s "mint(address)"  z 2  d true  t 3  r 4  o xml
 ```
-An ouput file appears with signature and some parameters in its name.
+An ouput file appears with the initial signature and some parameters in its name.
 
 **File :** `select0r-mint(address)--zero=2-max=4-decr=true-cpu=3.XML`
 
