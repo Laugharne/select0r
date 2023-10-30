@@ -1,6 +1,5 @@
 extern crate num_cpus;
 extern crate crypto;
-//extern crate crossbeam;
 
 use std::io::prelude::*;
 use std::f64;
@@ -189,22 +188,11 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let mut nn_results: usize      = 1;                                // REVOIR !
 	{
 		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
-
-		// let match SHARED_RESULTS.lock() {
-		// 	Ok(shared)=>{
-		// 		Ok(shared) =>;
-		// 	},
-		// 	Err(_e)=>{
-
-		// 	}
-		// }
-
 		if let Some(last_signature) = shared.last() {
 			optimal    = last_signature.selector;
 			nn_results = shared.len();
 		}
 	}
-	//println!("BEGIN\t{}\t{:>08X}", idx, optimal);
 
 	(idx..max).step_by(g.nn_threads).for_each( |value| {
 		match compute(&g, digit, value, hasher) {
@@ -214,12 +202,11 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 				if g.decrease == true {
 					if s.selector < optimal {
 						optimal = s.selector;
-						//-println!("{}\t{:>08X}\t{}", idx, s.selector, s.signature);
 						{
 							let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 							if let Some(last_signature) = shared.last() {
 
-								nn_results = shared.len();print!(" {}/{}", nn_results, g.max_results);
+								nn_results = shared.len();
 
 								let shared_optimal: u32 = last_signature.selector;
 								if shared_optimal < optimal {
@@ -243,7 +230,6 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 					g.results.push( s);
 				}
 
-				//println!("RR\t{}\t{}", idx, nn_results);
 				if nn_results >= g.max_results as usize {
 					write_file(&g);
 					process::exit(0);
@@ -253,8 +239,6 @@ fn thread(mut g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 			}// Some()
 		};// match compute()
 	});// step_by(g.nn_threads).for_each(value)
-
-	//-println!("END\t{}\t{:>08X}", idx, optimal);
 
 }
 
@@ -269,12 +253,9 @@ fn threads_launcher(g: &Globals) {
 		});
 	}
 
-	//-let optimal: u32 = u32::MAX;
-
 	(1..=g.digit_max).for_each( |digit| {
 		print!("Pass #{} ", digit);
 		let max: IteratedValue = 1 << (BASE_BITS*digit);
-		//println!("{} : {}", digit, max);
 
 		let _ = thread::scope(|scope| {
 			(0..g.nn_threads).for_each(|thread_idx| {
