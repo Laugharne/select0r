@@ -151,28 +151,7 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 }
 
 
-fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
-	let value64: String     = base64_to_string(digit, value).unwrap();
-	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
-	let s2s: SelectorResult = signature_to_selector(&signature, hasher);
-	let selector_u32: u32   = s2s.selector;
-	let zero_counter: u32   = s2s.zero_counter;
-
-	if selector_u32 == 0 {return None;}
-	if zero_counter < g.difficulty {return None;}
-
-	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
-	let leading_zero = get_leading_zeros(selector_u32);
-
-	Some( SignatureResult {
-		signature   : signature,
-		selector    : selector_u32,
-		leading_zero: leading_zero,
-	})
-
-}
-
-fn get_leading_zeros(selector_u32: u32) -> u32 {
+fn count_leading_zeros(selector_u32: u32) -> u32 {
 	let mut leading_zero: u32 = 0;
 	if (selector_u32 & 0xFF000000) == 0 {
 		leading_zero += 1;
@@ -184,6 +163,28 @@ fn get_leading_zeros(selector_u32: u32) -> u32 {
 		}
 	}
 	leading_zero
+}
+
+
+fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
+	let value64: String     = base64_to_string(digit, value).unwrap();
+	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
+	let s2s: SelectorResult = signature_to_selector(&signature, hasher);
+	let selector_u32: u32   = s2s.selector;
+	let zero_counter: u32   = s2s.zero_counter;
+
+	if selector_u32 == 0 {return None;}
+	if zero_counter < g.difficulty {return None;}
+
+	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
+	let leading_zero = count_leading_zeros(selector_u32);
+
+	Some( SignatureResult {
+		signature   : signature,
+		selector    : selector_u32,
+		leading_zero: leading_zero,
+	})
+
 }
 
 
