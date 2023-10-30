@@ -162,16 +162,7 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 	if zero_counter < g.difficulty {return None;}
 
 	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
-	let mut leading_zero: u32 = 0;
-	if (selector_u32 & 0xFF000000) == 0 {
-		leading_zero += 1;
-		if (selector_u32 & 0x00FF0000) == 0 {
-			leading_zero += 1;
-			if (selector_u32 & 0x0000FF00) == 0 {
-				leading_zero += 1;
-			}
-		}
-	}
+	let leading_zero = get_leading_zeros(selector_u32);
 
 	Some( SignatureResult {
 		signature   : signature,
@@ -179,6 +170,20 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 		leading_zero: leading_zero,
 	})
 
+}
+
+fn get_leading_zeros(selector_u32: u32) -> u32 {
+    let mut leading_zero: u32 = 0;
+    if (selector_u32 & 0xFF000000) == 0 {
+		    leading_zero += 1;
+		    if (selector_u32 & 0x00FF0000) == 0 {
+			    leading_zero += 1;
+			    if (selector_u32 & 0x0000FF00) == 0 {
+				    leading_zero += 1;
+			    }
+		    }
+	    }
+    leading_zero
 }
 
 
