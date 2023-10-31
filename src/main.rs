@@ -165,6 +165,13 @@ fn count_leading_zeros(selector_u32: u32) -> u32 {
 	leading_zero
 }
 
+fn count_leading_zeros_2(selector_u32: u32) -> u32 {
+	if (selector_u32 & 0xFF000000) != 0 { return 0;}
+	if (selector_u32 & 0x00FF0000) != 0 { return 1;}
+	if (selector_u32 & 0x0000FF00) != 0 { return 2;}
+	3
+}
+
 
 fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
 	let value64: String     = base64_to_string(digit, value).unwrap();
