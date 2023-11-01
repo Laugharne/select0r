@@ -30,7 +30,10 @@ type  IteratedValue           = u32;	// u64;
 const BASE_NN: IteratedValue  = 64;
 const BASE_MAX: IteratedValue = BASE_NN-1;
 const BASE_BITS: u32          = BASE_MAX.count_ones();
-const FOUND: &str             = "⭐";	// "■"
+
+const LOW: &str   = "▦";
+const FOUND: &str = "■";
+const STAR: &str  = "★";
 
 
 #[derive(Clone)]
@@ -150,7 +153,7 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 	}
 }
 
-
+/*
 fn count_leading_zeros(selector_u32: u32) -> u32 {
 	let mut leading_zero: u32 = 0;
 	if (selector_u32 & 0xFF000000) == 0 {
@@ -164,12 +167,13 @@ fn count_leading_zeros(selector_u32: u32) -> u32 {
 	}
 	leading_zero
 }
-
-fn count_leading_zeros_2(selector_u32: u32) -> u32 {
+*/
+fn count_leading_zeros(selector_u32: u32) -> u32 {
 	if (selector_u32 & 0xFF000000) != 0 { return 0;}
 	if (selector_u32 & 0x00FF0000) != 0 { return 1;}
 	if (selector_u32 & 0x0000FF00) != 0 { return 2;}
-	3
+	if (selector_u32 & 0x000000FF) != 0 { return 3;}
+	4
 }
 
 
@@ -180,7 +184,7 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 	let selector_u32: u32   = s2s.selector;
 	let zero_counter: u32   = s2s.zero_counter;
 
-	if selector_u32 == 0 {return None;}
+	//if selector_u32 == 0 {return None;}
 	if zero_counter < g.difficulty {return None;}
 
 	//println!("{:>8x}\t{}\t{:?}", selector_u32, signature, &selector_u8_vec[..4]);
@@ -225,7 +229,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 								if shared_optimal < optimal {
 									optimal = shared_optimal;
 								} else if shared_optimal > optimal {
-									print!("{}", FOUND);
+									print!("{}", in_progress(s.leading_zero));	
 									shared.push( SignatureResult{
 										signature   : s.signature,
 										selector    : optimal,
@@ -239,7 +243,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 					}
 				} else {
 					//println!("  [{:>08X}]\t{}", s.selector, s.signature);
-					print!("{}", FOUND);
+					print!("{}", in_progress(s.leading_zero));
 					let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 					shared.push( SignatureResult{
 						signature   : s.signature,
@@ -249,7 +253,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 					nn_results = shared.len();
 				}
 
-				if nn_results >= g.max_results as usize {
+				if (optimal == 0) || (nn_results >= g.max_results as usize) {
 					write_file(&g);
 					process::exit(0);
 					//return;
@@ -259,6 +263,18 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 		};// match compute()
 	});// step_by(g.nn_threads).for_each(value)
 
+}
+
+
+fn in_progress(nn_zeros: u32) -> ColoredString {
+	let ret: ColoredString = match nn_zeros {
+		1 => FOUND.to_string().red(),
+		2 => FOUND.to_string().yellow().bold(),
+		3 => FOUND.to_string().green(),
+		4 => STAR.to_string().green(),
+		_ => LOW.to_string().bright_red(),
+	};
+	ret
 }
 
 
@@ -295,6 +311,7 @@ fn threads_launcher(g: &Globals) {
 fn write_file(g: &Globals) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
 							g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
+	println!("\n\nOutput : {}\n", file_name.green());
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 
 	match csv_file {
