@@ -174,4 +174,5 @@ nn_zero=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $5 }')
 nn_threads=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $6 }')
 output=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $7 }')
 decrease=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $8 }')
+select0r  s $signature  z $nn_zero  d $decrease  t $nn_threads  r $nn_result  o $output
 ```

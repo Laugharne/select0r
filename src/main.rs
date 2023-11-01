@@ -546,9 +546,12 @@ nn_zero=$(echo "$result" | awk 'BEGIN {FS="|" } { print $5 }')
 nn_threads=$(echo "$result" | awk 'BEGIN {FS="|" } { print $6 }')
 output=$(echo "$result" | awk 'BEGIN {FS="|" } { print $7 }')
 decrease=$(echo "$result" | awk 'BEGIN {FS="|" } { print $8 }')
+<path to select0r executable> s $signature  z $nn_zero  d $decrease  t $nn_threads  r $nn_result  o $output
+
 echo "$result"
 echo "$signature"
 echo "$nn_result"
+echo "$nn_zero"
 echo "$nn_threads"
 echo "$output"
 echo "$decrease"
