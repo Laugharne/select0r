@@ -151,6 +151,7 @@ An ouput file appears with the initial signature and some parameters in its name
 sudo apt install yad
 ```
 
+
 ### 💻 Script
 
 There is the code to provide graphical interface to **select0r** tool.

@@ -330,8 +330,8 @@ fn write_file(g: &Globals) {
 			for line in shared.iter() {
 				let line_csv: String = match g.output {
 					Output::TSV  =>	format!("{:>08x}\t{}\t{}\n", line.selector, line.leading_zero, line.signature),
-					Output::CSV  =>	format!("\"{:>08x}\",\"{}\",\"{}\"\n", line.selector, line.leading_zero, line.signature),
-					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }},\n"
+					Output::CSV  =>	format!("\"{:>08x}\",{},\"{}\"\n", line.selector, line.leading_zero, line.signature),
+					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
 						,if line_idx==0 {" "}else{","},line.selector, line.leading_zero, line.signature),
 					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.leading_zero, line.signature),
 				};
