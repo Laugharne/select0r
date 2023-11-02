@@ -106,10 +106,11 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 
 	//println!("{:?}", str_u8);
 	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8[da..].to_vec());
-	match string {
+	/*match string {
 		Ok(str) => Ok(str),
 		Err(e) => Err(e),
-	}
+	}*/
+	string
 
 }
 
@@ -117,7 +118,7 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 
 	hasher.reset();
-	hasher.input_str(&signature);
+	hasher.input_str(signature);
 	let mut selector_u8_vec: [u8; 32] = [0; 32];
 	hasher.result(&mut selector_u8_vec);
 /*
@@ -201,8 +202,8 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 
 fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
-	let mut optimal:u32            = u32::MAX;                         // À REVOIR !
-	let mut nn_results: usize      = 1;                                // À REVOIR !
+	let mut optimal:u32            = u32::MAX;                         // TODO !
+	let mut nn_results: usize      = 1;                                // TODO !
 	{
 		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 		if let Some(last_signature) = shared.last() {
@@ -253,7 +254,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 					nn_results = shared.len();
 				}
 
-				if (optimal == 0) || (nn_results >= g.max_results as usize) {
+				if (optimal == 0) || (nn_results >= g.max_results) {
 					write_file(&g);
 					process::exit(0);
 					//return;
@@ -300,7 +301,7 @@ fn threads_launcher(g: &Globals) {
 			});
 		});
 	
-		println!("");
+		println!();
 
 	});// for_each( digit)
 	println!("\n");
@@ -362,16 +363,16 @@ fn cli_help() {
 		"Select0r".green().bold()
 	);
 	eprintln!("Usage : select0r s <function_signature string> z <number_of_zeros> r <max_results> d <decrement boolean> t <nbr_threads> o <format_ouput>");
-	eprintln!("");
+	eprintln!();
 	eprintln!("Example 1 : select0r s \"functionName(uint256)\"  z 2  r 5  d true  t 2  o tsv");
 	eprintln!("Example 2 : select0r s \"functionName2(uint)\"  z 2  r 7  d false  t 2  o json");
-	eprintln!("");
+	eprintln!();
 }
 
 
 fn init_app() -> Globals {
 
-	println!("");
+	println!();
 	println!("  .--.--.               ,--,                          ___        ,----..             ");
 	println!(" /  /    '.           ,--.'|                        ,--.'|_     /   /   \\            ");
 	println!("|  :  /`. /           |  | :                        |  | :,'   /   .     :   __  ,-. ");
@@ -385,7 +386,7 @@ fn init_app() -> Globals {
 	println!("  `--'---'  |   :    ||  ,   / |   :    ||   :    : |  ,   /   ;   :    /   ---'     ");
 	println!("             \\   \\  /  ---`-'   \\   \\  /  \\   \\  /   ---`-'     \\   \\ .'             ");
 	println!("              `----'             `----'    `----'                `---`               ");
-	println!("");
+	println!();
 
 
 	// manage cli parameters
@@ -427,7 +428,7 @@ fn init_app() -> Globals {
 			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
 			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().unwrap().clamp(2,20);},
 			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid decrease value")};},
-			NextIs::THREADS   => { arg_threads     = arg.parse::<usize>().unwrap().clamp( 1, num_cpus::get() as usize);},
+			NextIs::THREADS   => { arg_threads     = arg.parse::<usize>().unwrap().clamp( 1, num_cpus::get());},
 			NextIs::OUTPUT    => { arg_output = match arg.as_str() {
 									"tsv" |"TSV"|"" => Output::TSV,
 									"csv" |"CSV"    => Output::CSV,
@@ -451,21 +452,22 @@ fn init_app() -> Globals {
 
 	}
 
-	if arg_signature.len() <= 0 {
+	//if arg_signature.len() == 0 {
+	if arg_signature.is_empty() {
 		cli_help();
 		panic!("No signature !?");
 	}
 
-	println!("");
+	println!();
 	println!("- Signature\t`{}`",        arg_signature);
 	println!("- Difficulty\t{} zero(s)", arg_difficulty);
 	println!("- Max results\t{}",        arg_max_results);
 	println!("- Decrease\t{}",           arg_decrease);
 	println!("- Nbr threads\t{} CPU(s)", arg_threads);
 	println!("- Output\t{:?} file",      arg_output);
-	println!("");
+	println!();
 
-	let parenthesis: usize = arg_signature.find("(").unwrap();
+	let parenthesis: usize = arg_signature.find('(').unwrap();
 	let part_n: &str       = &arg_signature[..parenthesis];
 	let part_a: &str       = &arg_signature[parenthesis..];
 	let digit: u32         = (f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32) + 1;
