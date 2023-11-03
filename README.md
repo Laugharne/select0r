@@ -79,10 +79,10 @@ Go into `release` sub-directory as working directory and launch `select0r`.
 - *(3) : slower if true*
 - *(4) : hardware limitation (#CPU)*
 - *(5) : File formats*
-  - **tsv** = Tab Separated Value
-  - **csv** = Comma Separated Value
-  - **json** = JavaScript Object Notation
-  - **ron** = [Rusty Object Notation](https://github.com/ron-rs/ron)
+  - **tsv** *= Tab Separated Value*
+  - **csv** *= Comma Separated Value*
+  - **json** *= JavaScript Object Notation*
+  - **ron** = [*Rusty Object Notation*](https://github.com/ron-rs/ron)
   
 
 ### 👉 Examples
