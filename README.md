@@ -156,6 +156,8 @@ sudo apt install yad
 
 There is the code to provide graphical interface to **select0r** tool.
 
+Just set path to select0r binary executable and wrap it into a shell script or a bash function.
+
 ```bash
 select0r=$(yad \
 --title='Select0r' \
@@ -175,5 +177,5 @@ nn_zero=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $5 }')
 nn_threads=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $6 }')
 output=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $7 }')
 decrease=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $8 }')
-select0r  s $signature  z $nn_zero  d $decrease  t $nn_threads  r $nn_result  o $output
+path_to_select0r/select0r  s $signature  z $nn_zero  d $decrease  t $nn_threads  r $nn_result  o $output
 ```

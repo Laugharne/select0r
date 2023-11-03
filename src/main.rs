@@ -43,6 +43,7 @@ enum Output {
 	CSV,
 	JSON,
 	XML,
+	RON,
 }
 
 
@@ -255,7 +256,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 				}
 
 				if (optimal == 0) || (nn_results >= g.max_results) {
-					write_file(&g);
+					write_file(&g, "Goal reached !");
 					process::exit(0);
 					//return;
 				}
@@ -268,14 +269,13 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 
 
 fn in_progress(nn_zeros: u32) -> ColoredString {
-	let ret: ColoredString = match nn_zeros {
+	match nn_zeros {
 		1 => FOUND.to_string().red(),
 		2 => FOUND.to_string().yellow().bold(),
 		3 => FOUND.to_string().green(),
 		4 => STAR.to_string().green(),
 		_ => LOW.to_string().bright_red(),
-	};
-	ret
+	}
 }
 
 
@@ -309,10 +309,12 @@ fn threads_launcher(g: &Globals) {
 }
 
 
-fn write_file(g: &Globals) {
+fn write_file(g: &Globals, message: &str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
 							g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
-	println!("\n\nOutput : {}\n", file_name.green());
+
+	println!("\n\n{}", message.green());
+	println!("\nOutput : {}\n", file_name.cyan());
 	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
 
 	match csv_file {
@@ -322,6 +324,7 @@ fn write_file(g: &Globals) {
 				Output::CSV  => "\"SELECTOR\",\"LEADING_ZERO\",\"SIGNATURE\"\n",
 				Output::JSON => "{\n",
 				Output::XML  => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n",
+				Output::RON  => "Select0r(\n\tresults: [\n",
 			};
 			let _ = f.write(format.as_bytes());
 
@@ -335,6 +338,8 @@ fn write_file(g: &Globals) {
 					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
 						,if line_idx==0 {" "}else{","},line.selector, line.leading_zero, line.signature),
 					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.leading_zero, line.signature),
+					Output::RON  => format!("\t\t{}(selector: \"{:>08x}\", leading_zero: {}, signature: \"{}\")\n"
+						,if line_idx==0 {" "}else{","},line.selector, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 				line_idx += 1;
@@ -343,6 +348,7 @@ fn write_file(g: &Globals) {
 			let format: &str = match g.output {
 				Output::JSON => "}\n",
 				Output::XML  => "</select0r>\n",
+				Output::RON  => "\t],\n)\n",
 				_            => "",
 			};
 			let _ = f.write(format.as_bytes());
@@ -371,6 +377,7 @@ fn cli_help() {
 
 
 fn init_app() -> Globals {
+// TODO intercept ctrl-c to stop processing and write results on output file !
 
 	println!();
 	println!("  .--.--.               ,--,                          ___        ,----..             ");
@@ -434,6 +441,7 @@ fn init_app() -> Globals {
 									"csv" |"CSV"    => Output::CSV,
 									"json"|"JSON"   => Output::JSON,
 									"xml" |"XML"    => Output::XML,
+									"ron" |"RON"    => Output::RON,
 									_               => panic!("Invalid output value")
 								};},
 			_                 => {},
@@ -488,11 +496,12 @@ fn init_app() -> Globals {
 }
 
 
+
 fn main() {
 	let g: Globals = init_app();
 	//println!("{:?}", g);
 	threads_launcher( &g);
-	write_file(&g);
+	write_file(&g, "All done !");
 	process::exit(0);
 
 }
@@ -511,53 +520,3 @@ fn main() {
 //					r nbr results needed
 //					d decrease values
 //					t nbr of threads (clamp by app)
-
-/*
-
-
-action=$(yad --form --width 400 --height 300  --field="Select0r":LBL --field="":LBL --field="Signature":CE  --field="Nbr of Results":CE  --field="Nbr of zero":CB  --field="Nbr of Threads":CB --field="Ouput":CB  --field="Decrease":CHK "gtk-cancel:1"  "" "mint(address)" "4" "1\!^2\!3" "^1\!2\!3\!4\!5\!6\!7\!8\!9\!10\!11\!12\!13\!14\!15\!16" "^TSV\!CSV\!JSON\!XML" "FALSE");echo "$action"
-
-action=$(yad --form --width 400 --height 300 \
---field="Select0r":LBL  \
---field="":LBL \
---field="Signature":CE \
---field="Nbr of Results":CE \
---field="Nbr of zero":CB \
---field="Nbr of Threads":CB \
---field="Ouput":CB \
---field="Decrease":CHK \
-"gtk-cancel:1"  "" "mint(address)" "4" "1\!^2\!3" "^1\!2\!3\!4\!5\!6\!7\!8\!9\!10\!11\!12\!13\!14\!15\!16" "^TSV\!CSV\!JSON\!XML" "FALSE")
-echo "$action"
-
-
-result=$(yad \
---title='Select0r' \
---form --width 400 --height 300 \
---field="<b>Find better function name to optimize gas cost.</b>":LBL '' \
---field="":LBL '' \
---field="Signature" 'mint(address)' \
---field="Nbr of Results":CB '1\!2\!3\!^4\!5\!6\!7\!8\!9\!10' \
---field="Nbr of zero":CB '1\!^2\!3' \
---field="Nbr of Threads":CB '1\!^2\!3\!4\!5\!6\!7\!8\!9\!10\!11\!12\!13\!14\!15\!16' \
---field="Ouput":CB '^TSV\!CSV\!JSON\!XML' \
---field="Decrease":CHK 'FALSE' \
-)
-signature=$(echo "$result" | awk 'BEGIN {FS="|" } { print $3 }')
-nn_result=$(echo "$result" | awk 'BEGIN {FS="|" } { print $4 }')
-nn_zero=$(echo "$result" | awk 'BEGIN {FS="|" } { print $5 }')
-nn_threads=$(echo "$result" | awk 'BEGIN {FS="|" } { print $6 }')
-output=$(echo "$result" | awk 'BEGIN {FS="|" } { print $7 }')
-decrease=$(echo "$result" | awk 'BEGIN {FS="|" } { print $8 }')
-<path to select0r executable> s $signature  z $nn_zero  d $decrease  t $nn_threads  r $nn_result  o $output
-
-echo "$result"
-echo "$signature"
-echo "$nn_result"
-echo "$nn_zero"
-echo "$nn_threads"
-echo "$output"
-echo "$decrease"
-
-||mint(address)|4|2|2|TSV|FALSE|
-
-*/
