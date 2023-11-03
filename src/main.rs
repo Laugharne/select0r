@@ -330,16 +330,18 @@ fn write_file(g: &Globals, message: &str) {
 
 			let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 			let mut line_idx: u32 = 0;
-			//for line in &g.results {
+
 			for line in shared.iter() {
+				let comma = if line_idx==0 {" "}else{","};
+
 				let line_csv: String = match g.output {
 					Output::TSV  =>	format!("{:>08x}\t{}\t{}\n", line.selector, line.leading_zero, line.signature),
 					Output::CSV  =>	format!("\"{:>08x}\",{},\"{}\"\n", line.selector, line.leading_zero, line.signature),
 					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
-						,if line_idx==0 {" "}else{","},line.selector, line.leading_zero, line.signature),
+						,comma, line.selector, line.leading_zero, line.signature),
 					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.leading_zero, line.signature),
 					Output::RON  => format!("\t\t{}(selector: \"{:>08x}\", leading_zero: {}, signature: \"{}\")\n"
-						,if line_idx==0 {" "}else{","},line.selector, line.leading_zero, line.signature),
+						,comma, line.selector, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 				line_idx += 1;

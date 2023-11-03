@@ -82,7 +82,7 @@ Go into `release` sub-directory as working directory and launch `select0r`.
   - **tsv** *= Tab Separated Value*
   - **csv** *= Comma Separated Value*
   - **json** *= JavaScript Object Notation*
-  - **ron** = [*Rusty Object Notation*](https://github.com/ron-rs/ron)
+  - **ron** *= [Rusty Object Notation](https://github.com/ron-rs/ron)*
   
 
 ### 👉 Examples
