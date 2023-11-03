@@ -65,20 +65,20 @@ Go into `release` sub-directory as working directory and launch `select0r`.
 
 ### ✏️ Parameters
 
-| Parameters | Parameter names      | Data types | Examples      | Domains                | Default       | Descriptions                 |
-| ---------- | -------------------- | ---------- | ------------- | ---------------------- | ------------- | ---------------------------- |
-| **`s`**    | `function_signature` | string     | mint(address) | *(1)*                  | **Mandatory** | Function signature *(1)*     |
-| **`z`**    | `number_of_zeros`    | numeric    | 2             | [1..3]                 | **2**         | # of zero (difficulty) *(2)* |
-| **`r`**    | `max_results`        | numeric    | 5             | [2..10]                | **4**         | # of needed result *(2)*     |
-| **`d`**    | `decrement`          | boolean    | true          | true/false             | **false**     | *(3)*                        |
-| **`t`**    | `nbr_threads`        | numeric    | 4             | [2..#cpu]              | **2**         | # of threads to use (*4*)    |
-| **`o`**    | `format_ouput`       | string     | xml           | tsv/csv/json/xml *(5)* | **tsv**       | File format output           |
+| Parameters | Parameter names      | Data types | Examples      | Domains                    | Default       | Descriptions                 |
+| ---------- | -------------------- | ---------- | ------------- | -------------------------- | ------------- | ---------------------------- |
+| **`s`**    | `function_signature` | string     | mint(address) | *(1)*                      | **Mandatory** | Function signature *(1)*     |
+| **`z`**    | `number_of_zeros`    | numeric    | 2             | [1..3]                     | **2**         | # of zero (difficulty) *(2)* |
+| **`r`**    | `max_results`        | numeric    | 5             | [2..10]                    | **4**         | # of needed result *(2)*     |
+| **`d`**    | `decrement`          | boolean    | true          | true/false                 | **false**     | *(3)*                        |
+| **`t`**    | `nbr_threads`        | numeric    | 4             | [2..#cpu]                  | **2**         | # of threads to use (*4*)    |
+| **`o`**    | `format_ouput`       | string     | xml           | tsv/csv/json/xml/ron *(5)* | **tsv**       | File format output           |
 
 - *(1) : no spaces, no parameter names, just a valid solidity signature*
 - *(2) : higher it is, longer it is*
 - *(3) : slower if true*
 - *(4) : hardware limitation (#CPU)*
-- *(5) : tsv = Tab Separated Value, csv = Comma Separated Value*
+- *(5) : tsv = Tab Separated Value, csv = Comma Separated Value, ron = [Rusty Object Notation](https://github.com/ron-rs/ron)*
 
 
 ### 👉 Examples
