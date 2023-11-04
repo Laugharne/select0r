@@ -85,6 +85,19 @@ struct SignatureResult {
 }
 
 
+/// This function converts an integer number to base64 into a string following the defined rules.
+///
+/// # Arguments
+///
+/// * `digit` - The number of base64 digits to generate.
+/// * `value` - The integer value to convert to base64.
+///
+/// # Example
+///
+/// ```
+/// let result = base64_to_string(3, 123456);
+/// println!("{:?}", result);
+/// ```
 fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::string::FromUtf8Error> {
 
 	// An identifier in solidity has to start with a letter, a dollar-sign or an underscore and may
@@ -116,6 +129,28 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 }
 
 
+/// Computes a selector based on the provided signature using the Sha3 hasher.
+///
+/// # Arguments
+///
+/// * `signature` - A string representing the signature to be processed.
+/// * `hasher` - An instance of the Sha3 hasher used for computation.
+///
+/// # Returns
+///
+/// Returns a `SelectorResult` containing the computed selector and the count of zeros in the selector.
+///
+/// # Example
+///
+/// ```
+/// use crate::signature_to_selector;
+/// use crypto::sha3::Sha3;
+///
+/// let signature = "example_signature";
+/// let hasher = Sha3::new();
+/// let result = signature_to_selector(signature, hasher);
+/// println!("{:?}", result);
+/// ```
 fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 
 	hasher.reset();
@@ -155,21 +190,27 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 	}
 }
 
-/*
-fn count_leading_zeros(selector_u32: u32) -> u32 {
-	let mut leading_zero: u32 = 0;
-	if (selector_u32 & 0xFF000000) == 0 {
-		leading_zero += 1;
-		if (selector_u32 & 0x00FF0000) == 0 {
-			leading_zero += 1;
-			if (selector_u32 & 0x0000FF00) == 0 {
-				leading_zero += 1;
-			}
-		}
-	}
-	leading_zero
-}
-*/
+
+/// This function counts the number of leading zeros in the 32-bit unsigned integer `selector_u32`.
+/// It checks the most significant byte (MSB) first and returns the position of the first set bit, starting from the leftmost bit.
+/// If no bits are set, it returns 4.
+///
+/// # Arguments
+///
+/// * `selector_u32` - The 32-bit unsigned integer to count leading zeros from.
+///
+/// # Returns
+///
+/// The function returns the position of the first set bit (starting from 0), or 4 if no bits are set.
+///
+/// # Example
+///
+/// ```
+/// use crate::count_leading_zeros;
+///
+/// let result = count_leading_zeros(0x0000ABCD);
+/// println!("{}", result); // 2
+/// ```
 fn count_leading_zeros(selector_u32: u32) -> u32 {
 	if (selector_u32 & 0xFF000000) != 0 { return 0;}
 	if (selector_u32 & 0x00FF0000) != 0 { return 1;}
@@ -178,7 +219,18 @@ fn count_leading_zeros(selector_u32: u32) -> u32 {
 	4
 }
 
-
+/// Computes a signature result based on the given global settings, digit value, and hashing algorithm.
+/// 
+/// # Arguments
+/// 
+/// * `g` - A reference to the global settings.
+/// * `digit` - The number of digits.
+/// * `value` - The iterated value.
+/// * `hasher` - The hashing algorithm (Sha3).
+/// 
+/// # Returns
+/// 
+/// An `Option` containing the computed `SignatureResult` if the computation succeeds, or `None` if the computation fails.
 fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
 	let value64: String     = base64_to_string(digit, value).unwrap();
 	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
@@ -268,6 +320,25 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 }
 
 
+/// Determines the progress status based on the number of zeros and returns a colored string accordingly.
+///
+/// # Arguments
+///
+/// * `nn_zeros` - The number of zeros to indicate the progress status.
+///
+/// # Returns
+///
+/// A colored string representing the progress status based on the given number of zeros.
+///
+/// # Example
+///
+/// ```
+/// use crate::in_progress;
+/// use text_colorizer::*;
+///
+/// let result = in_progress(3);
+/// println!("{:?}", result);
+/// ```
 fn in_progress(nn_zeros: u32) -> ColoredString {
 	match nn_zeros {
 		1 => FOUND.to_string().red(),
@@ -279,6 +350,22 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 }
 
 
+/// Launches multiple threads to perform operations based on the provided Global configuration.
+///
+/// This function pushes a `SignatureResult` into the shared results, launches multiple threads, and performs operations based on the Global configuration and specified digits.
+///
+/// # Arguments
+///
+/// * `g` - A reference to the Globals structure containing configuration information.
+///
+/// # Example
+///
+/// ```
+/// use crate::threads_launcher;
+///
+/// let globals = Globals { ... }; // Example initialization of Globals struct
+/// threads_launcher(&globals);
+/// ```
 fn threads_launcher(g: &Globals) {
 	{
 		let mut shared = SHARED_RESULTS.lock().unwrap();
@@ -309,6 +396,20 @@ fn threads_launcher(g: &Globals) {
 }
 
 
+/// Writes the contents to a file based on the provided globals and message.
+///
+/// # Arguments
+///
+/// * `g` - A reference to the `Globals` struct.
+/// * `message` - The message to be written in standard output.
+///
+/// # Example
+///
+/// ```
+/// let globals = Globals { ... }; // Example initialization of Globals struct
+/// let message = "This is an example message."; // Example message
+/// write_file(&globals, message);
+/// ```
 fn write_file(g: &Globals, message: &str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
 							g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
