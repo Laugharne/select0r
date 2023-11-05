@@ -119,12 +119,7 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 	da += 1;
 
 	//println!("{:?}", str_u8);
-	let string: Result<String, std::string::FromUtf8Error> = String::from_utf8(str_u8[da..].to_vec());
-	/*match string {
-		Ok(str) => Ok(str),
-		Err(e) => Err(e),
-	}*/
-	string
+	String::from_utf8(str_u8[da..].to_vec())
 
 }
 
@@ -143,7 +138,6 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 /// # Example
 ///
 /// ```
-/// use crate::signature_to_selector;
 /// use crypto::sha3::Sha3;
 ///
 /// let signature = "example_signature";
@@ -157,24 +151,7 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 	hasher.input_str(signature);
 	let mut selector_u8_vec: [u8; 32] = [0; 32];
 	hasher.result(&mut selector_u8_vec);
-/*
-	let zero_counter: usize = (&selector_u8_vec[..4]).iter().filter(|&&x| x == 0).count();
-	let selector_u32: u32   = ((selector_u8_vec[0] as u32) << 24)
-							+ ((selector_u8_vec[1] as u32) << 16)
-							+ ((selector_u8_vec[2] as u32) << 8)
-							+   selector_u8_vec[3] as u32;
-*/
-/*
-	let mut zero_counter: u32 = 0;
-	let mut selector_u32: u32 = 0;
-	for i in 0..4 {
-		if selector_u8_vec[i] == 0 {
-			zero_counter += 1;
-		}
 
-		selector_u32 = (selector_u32<<8) + (selector_u8_vec[i] as u32);
-	}
-*/
 	let (zero_counter, selector_u32) = selector_u8_vec
 		.iter()
 		.take(4)
@@ -253,10 +230,28 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 }
 
 
+/// Runs the computation in a separate thread using the provided parameters.
+///
+/// # Arguments
+///
+/// * `g` - The `Globals` struct containing various parameters.
+/// * `idx` - The starting value for the computation.
+/// * `digit` - The digit value to be used in the computation.
+/// * `max` - The maximum value to be considered in the computation.
+///
+/// # Example
+///
+/// ```
+/// let globals = Globals { ... }; // Example initialization of Globals struct
+/// let start_idx: IteratedValue = 123; // Example starting value
+/// let digit: u32 = 2; // Example digit value
+/// let max_value: IteratedValue = 4096; // Example maximum value
+/// thread(globals, start_idx, digit, max_value);
+/// ```
 fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
-	let mut optimal:u32            = u32::MAX;                         // TODO !
-	let mut nn_results: usize      = 1;                                // TODO !
+	let mut optimal:u32       = u32::MAX;  // TODO !
+	let mut nn_results: usize = 1;         // TODO !
 	{
 		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
 		if let Some(last_signature) = shared.last() {
@@ -352,7 +347,9 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 
 /// Launches multiple threads to perform operations based on the provided Global configuration.
 ///
-/// This function pushes a `SignatureResult` into the shared results, launches multiple threads, and performs operations based on the Global configuration and specified digits.
+/// This function pushes a `SignatureResult` into the shared results,
+/// launches multiple threads for each pass based on number of base64 digit 
+/// and performs operations based on the Global configuration and specified digits.
 ///
 /// # Arguments
 ///
@@ -361,8 +358,6 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 /// # Example
 ///
 /// ```
-/// use crate::threads_launcher;
-///
 /// let globals = Globals { ... }; // Example initialization of Globals struct
 /// threads_launcher(&globals);
 /// ```
@@ -412,7 +407,7 @@ fn threads_launcher(g: &Globals) {
 /// ```
 fn write_file(g: &Globals, message: &str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
-							g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
+						g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
 
 	println!("\n\n{}", message.green());
 	println!("\nOutput : {}\n", file_name.cyan());
@@ -463,6 +458,19 @@ fn write_file(g: &Globals, message: &str) {
 }
 
 
+/// Displays the command-line interface (CLI) help information for the Select0r application.
+///
+/// This function provides guidance on the usage of the Select0r tool, including examples
+/// of how to use it with various command-line arguments.
+///
+/// # Example
+///
+/// ```
+/// use crate::cli_help;
+///
+/// // Display help information for the CLI
+/// cli_help();
+/// ```
 fn cli_help() {
 	// eprintln
 	// equivalent to println!() except the output goes to
@@ -479,6 +487,14 @@ fn cli_help() {
 }
 
 
+/// Initializes the application based on command line arguments.
+///
+/// # Examples
+///
+/// ```
+/// let globals = init_app();
+/// println!("{}", globals.signature);
+/// ```
 fn init_app() -> Globals {
 // TODO intercept ctrl-c to stop processing and write results on output file !
 
