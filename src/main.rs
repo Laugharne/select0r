@@ -70,12 +70,24 @@ struct Globals {
 	output     : Output,
 }
 
+
 struct SelectorResult {
 	selector    : u32,
 	zero_counter: u32,
 }
 
 
+/// The `SignatureResult` struct represents the result of a signature operation, containing a signature
+/// string, a selector value, and a leading zero count.
+/// 
+/// Properties:
+/// 
+/// * `signature`: A string that represents a valid Solidity signature.
+/// * `selector`: The `selector` property is of type `u32`, which stands for unsigned 32-bit integer. It
+/// is used to store a numeric value that represents a selector.
+/// * `leading_zero`: The `leading_zero` property is of type `u32`, which stands for unsigned 32-bit
+/// integer. It represents the number of leading zeros in the binary representation of the `signature`
+/// property.
 #[derive(Clone)]
 #[derive(Debug)]
 struct SignatureResult {
@@ -85,19 +97,21 @@ struct SignatureResult {
 }
 
 
-/// This function converts an integer number to base64 into a string following the defined rules.
-///
-/// # Arguments
-///
-/// * `digit` - The number of base64 digits to generate.
-/// * `value` - The integer value to convert to base64.
-///
-/// # Example
-///
-/// ```
-/// let result = base64_to_string(3, 123456);
-/// println!("{:?}", result);
-/// ```
+/// The function `base64_to_string` converts a given digit and value into a string using a specific
+/// alphabet.
+/// 
+/// Arguments:
+/// 
+/// * `digit`: The `digit` parameter represents the number of digits in the base64 value that you want
+/// to convert to a string.
+/// * `value`: The `value` parameter in the `base64_to_string` function is of type `IteratedValue`. It
+/// represents the value that needs to be converted from base64 to a string.
+/// 
+/// Returns:
+/// 
+/// The function `base64_to_string` returns a `Result` type, specifically `Result<String,
+/// std::string::FromUtf8Error>`. This means that it can either return a `String` if the conversion from
+/// base64 to string is successful, or an `std::string::FromUtf8Error` if the conversion fails.
 fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::string::FromUtf8Error> {
 
 	// An identifier in solidity has to start with a letter, a dollar-sign or an underscore and may
@@ -124,27 +138,21 @@ fn base64_to_string( digit: u32, value: IteratedValue) -> Result<String, std::st
 }
 
 
-/// Computes a selector based on the provided signature using the Sha3 hasher.
-///
-/// # Arguments
-///
-/// * `signature` - A string representing the signature to be processed.
-/// * `hasher` - An instance of the Sha3 hasher used for computation.
-///
-/// # Returns
-///
-/// Returns a `SelectorResult` containing the computed selector and the count of zeros in the selector.
-///
-/// # Example
-///
-/// ```
-/// use crypto::sha3::Sha3;
-///
-/// let signature = "example_signature";
-/// let hasher = Sha3::new();
-/// let result = signature_to_selector(signature, hasher);
-/// println!("{:?}", result);
-/// ```
+/// The function takes a signature as input, hashes it using SHA3, and converts the resulting hash into
+/// a selector by counting the number of leading zeros and converting the first 4 bytes into a u32
+/// value.
+/// 
+/// Arguments:
+/// 
+/// * `signature`: The `signature` parameter is a string that represents a function signature. It is
+/// used to generate a selector, which is a unique identifier for the function.
+/// * `hasher`: The `hasher` parameter is an instance of the `Sha3` struct, which is used to compute the
+/// SHA-3 hash of the input signature. It is passed as a mutable reference to the function so that it
+/// can be reset and reused for multiple computations.
+/// 
+/// Returns:
+/// 
+/// The function `signature_to_selector` returns a `SelectorResult` struct.
 fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 
 	hasher.reset();
@@ -168,26 +176,15 @@ fn signature_to_selector(signature: &str, mut hasher: Sha3) -> SelectorResult {
 }
 
 
-/// This function counts the number of leading zeros in the 32-bit unsigned integer `selector_u32`.
-/// It checks the most significant byte (MSB) first and returns the position of the first set bit, starting from the leftmost bit.
-/// If no bits are set, it returns 4.
-///
-/// # Arguments
-///
-/// * `selector_u32` - The 32-bit unsigned integer to count leading zeros from.
-///
-/// # Returns
-///
-/// The function returns the position of the first set bit (starting from 0), or 4 if no bits are set.
-///
-/// # Example
-///
-/// ```
-/// use crate::count_leading_zeros;
-///
-/// let result = count_leading_zeros(0x0000ABCD);
-/// println!("{}", result); // 2
-/// ```
+/// The function counts the number of leading zeros in a 32-bit unsigned integer.
+/// 
+/// Arguments:
+/// 
+/// * `selector_u32`: The parameter `selector_u32` is an unsigned 32-bit integer.
+/// 
+/// Returns:
+/// 
+/// If none of the conditions in the if statements are true, then the function will return 4.
 fn count_leading_zeros(selector_u32: u32) -> u32 {
 	if (selector_u32 & 0xFF000000) != 0 { return 0;}
 	if (selector_u32 & 0x00FF0000) != 0 { return 1;}
@@ -196,18 +193,24 @@ fn count_leading_zeros(selector_u32: u32) -> u32 {
 	4
 }
 
-/// Computes a signature result based on the given global settings, digit value, and hashing algorithm.
+
+/// The function takes in some parameters, computes a signature result based on those parameters, and
+/// returns it as an option.
 /// 
-/// # Arguments
+/// Arguments:
 /// 
-/// * `g` - A reference to the global settings.
-/// * `digit` - The number of digits.
-/// * `value` - The iterated value.
-/// * `hasher` - The hashing algorithm (Sha3).
+/// * `g`: A reference to a struct called `Globals` which contains global variables and settings for the
+/// computation.
+/// * `digit`: The `digit` parameter is of type `u32` and represents the number of base 64 digits used in the
+/// computation.
+/// * `value`: The `value` parameter is of type `IteratedValue`. It represents some value that has been
+/// iterated over.
+/// * `hasher`: The `hasher` parameter is of type `Sha3`, which is a hash function. It is used to
+/// compute the hash value of the `signature` string.
 /// 
-/// # Returns
+/// Returns:
 /// 
-/// An `Option` containing the computed `SignatureResult` if the computation succeeds, or `None` if the computation fails.
+/// The function `compute` returns an `Option<SignatureResult>`.
 fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
 	let value64: String     = base64_to_string(digit, value).unwrap();
 	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
@@ -230,24 +233,18 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 }
 
 
-/// Runs the computation in a separate thread using the provided parameters.
-///
-/// # Arguments
-///
-/// * `g` - The `Globals` struct containing various parameters.
-/// * `idx` - The starting value for the computation.
-/// * `digit` - The digit value to be used in the computation.
-/// * `max` - The maximum value to be considered in the computation.
-///
-/// # Example
-///
-/// ```
-/// let globals = Globals { ... }; // Example initialization of Globals struct
-/// let start_idx: IteratedValue = 123; // Example starting value
-/// let digit: u32 = 2; // Example digit value
-/// let max_value: IteratedValue = 4096; // Example maximum value
-/// thread(globals, start_idx, digit, max_value);
-/// ```
+/// The function `thread` takes in some parameters and performs computations using a hashing algorithm,
+/// updating shared variables and printing progress along the way.
+/// 
+/// Arguments:
+/// 
+/// * `g`: The parameter `g` is of type `Globals` and represents a struct that contains global variables
+/// and settings for the program.
+/// * `idx`: The `idx` parameter represents the starting index for the iteration. It is used to
+/// determine the range of values that the `for_each` loop will iterate over.
+/// * `digit`: The `digit` parameter is of type `u32` and represents the number of base 64 digits.
+/// * `max`: The `max` parameter represents the maximum value for the iteration. It is of type
+/// `IteratedValue`.
 fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
 	let mut optimal:u32       = u32::MAX;  // TODO !
@@ -315,25 +312,17 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 }
 
 
-/// Determines the progress status based on the number of zeros and returns a colored string accordingly.
-///
-/// # Arguments
-///
-/// * `nn_zeros` - The number of zeros to indicate the progress status.
-///
-/// # Returns
-///
-/// A colored string representing the progress status based on the given number of zeros.
-///
-/// # Example
-///
-/// ```
-/// use crate::in_progress;
-/// use text_colorizer::*;
-///
-/// let result = in_progress(3);
-/// println!("{:?}", result);
-/// ```
+/// The function `in_progress` takes an input `nn_zeros` and returns a colored string based on its
+/// value.
+/// 
+/// Arguments:
+/// 
+/// * `nn_zeros`: The parameter `nn_zeros` is of type `u32`, which stands for unsigned 32-bit integer.
+/// It represents the number of zeros to indicate the progress status.
+/// 
+/// Returns:
+/// 
+/// The function `in_progress` returns a `ColoredString`.
 fn in_progress(nn_zeros: u32) -> ColoredString {
 	match nn_zeros {
 		1 => FOUND.to_string().red(),
@@ -350,17 +339,11 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 /// This function pushes a `SignatureResult` into the shared results,
 /// launches multiple threads for each pass based on number of base64 digit 
 /// and performs operations based on the Global configuration and specified digits.
-///
-/// # Arguments
-///
-/// * `g` - A reference to the Globals structure containing configuration information.
-///
-/// # Example
-///
-/// ```
-/// let globals = Globals { ... }; // Example initialization of Globals struct
-/// threads_launcher(&globals);
-/// ```
+/// 
+/// Arguments:
+/// 
+/// * `g`: The parameter `g` is of type `&Globals`, which means it is a reference to an object of type
+/// `Globals`.
 fn threads_launcher(g: &Globals) {
 	{
 		let mut shared = SHARED_RESULTS.lock().unwrap();
@@ -391,20 +374,15 @@ fn threads_launcher(g: &Globals) {
 }
 
 
-/// Writes the contents to a file based on the provided globals and message.
-///
-/// # Arguments
-///
-/// * `g` - A reference to the `Globals` struct.
-/// * `message` - The message to be written in standard output.
-///
-/// # Example
-///
-/// ```
-/// let globals = Globals { ... }; // Example initialization of Globals struct
-/// let message = "This is an example message."; // Example message
-/// write_file(&globals, message);
-/// ```
+/// The function `write_file` takes in a `Globals` struct and a message string, creates a file name
+/// based on the struct's properties, and writes the message and the struct's data to a file in the
+/// specified format.
+/// 
+/// Arguments:
+/// 
+/// * `g`: A reference to a struct called `Globals` which contains various configuration parameters for
+/// the file writing process.
+/// * `message`: A message to be display in standard output, before writing to the file.
 fn write_file(g: &Globals, message: &str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
 						g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
@@ -462,15 +440,6 @@ fn write_file(g: &Globals, message: &str) {
 ///
 /// This function provides guidance on the usage of the Select0r tool, including examples
 /// of how to use it with various command-line arguments.
-///
-/// # Example
-///
-/// ```
-/// use crate::cli_help;
-///
-/// // Display help information for the CLI
-/// cli_help();
-/// ```
 fn cli_help() {
 	// eprintln
 	// equivalent to println!() except the output goes to
@@ -487,14 +456,12 @@ fn cli_help() {
 }
 
 
-/// Initializes the application based on command line arguments.
-///
-/// # Examples
-///
-/// ```
-/// let globals = init_app();
-/// println!("{}", globals.signature);
-/// ```
+/// The `init_app` function initializes the application by parsing command line arguments and setting up
+/// global variables.
+/// 
+/// Returns:
+/// 
+/// The function `init_app()` returns a `Globals` struct.
 fn init_app() -> Globals {
 // TODO intercept ctrl-c to stop processing and write results on output file !
 
