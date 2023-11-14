@@ -13,8 +13,9 @@ use self::crypto::sha3::Sha3;
 use std::process;
 //use std::thread;
 use crossbeam::thread;
-
 use std::sync::Mutex;
+
+
 
 #[macro_use]
 extern crate lazy_static;
@@ -212,7 +213,7 @@ fn count_leading_zeros(selector_u32: u32) -> u32 {
 /// 
 /// The function `compute` returns an `Option<SignatureResult>`.
 fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Option<SignatureResult> {
-	let value64: String     = base64_to_string(digit, value).unwrap();
+	let value64: String     = base64_to_string(digit, value).expect("bytes are not UTF-8 ! ");
 	let signature: String   = format!("{}_{}{}",g.part_name ,value64, g.part_args );
 	let s2s: SelectorResult = signature_to_selector(&signature, hasher);
 	let selector_u32: u32   = s2s.selector;
@@ -250,7 +251,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let mut optimal:u32       = u32::MAX;  // TODO !
 	let mut nn_results: usize = 1;         // TODO !
 	{
-		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
 		if let Some(last_signature) = shared.last() {
 			optimal    = last_signature.selector;
 			nn_results = shared.len();
@@ -266,7 +267,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 					if s.selector < optimal {
 						optimal = s.selector;
 						{
-							let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+							let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
 							if let Some(last_signature) = shared.last() {
 
 								nn_results = shared.len();
@@ -290,10 +291,10 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 				} else {
 					//println!("  [{:>08X}]\t{}", s.selector, s.signature);
 					print!("{}", in_progress(s.leading_zero));
-					let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+					let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
 					shared.push( SignatureResult{
 						signature   : s.signature,
-						selector    : optimal,
+						selector    : s.selector,
 						leading_zero: s.leading_zero,
 					});
 					nn_results = shared.len();
@@ -344,7 +345,7 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 /// 
 /// * `g`: The parameter `g` is of type `&Globals`, which means it is a reference to an object of type
 /// `Globals`.
-fn threads_launcher(g: &Globals) {
+fn threads_launcher(g: &Globals) -> &Globals {
 	{
 		let mut shared = SHARED_RESULTS.lock().unwrap();
 		shared.push(SignatureResult {
@@ -370,6 +371,7 @@ fn threads_launcher(g: &Globals) {
 
 	});// for_each( digit)
 	println!("\n");
+	g
 
 }
 
@@ -383,7 +385,7 @@ fn threads_launcher(g: &Globals) {
 /// * `g`: A reference to a struct called `Globals` which contains various configuration parameters for
 /// the file writing process.
 /// * `message`: A message to be display in standard output, before writing to the file.
-fn write_file(g: &Globals, message: &str) {
+fn write_file(g: & Globals, message: & str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
 						g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
 
@@ -402,7 +404,7 @@ fn write_file(g: &Globals, message: &str) {
 			};
 			let _ = f.write(format.as_bytes());
 
-			let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+			let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
 			let mut line_idx: u32 = 0;
 
 			for line in shared.iter() {
@@ -518,17 +520,18 @@ fn init_app() -> Globals {
 		//println!("- {}", arg);
 		match _next {
 			NextIs::SIGNATURE => { arg_signature   = arg.to_string();},
-			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
-			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().unwrap().clamp(2,20);},
-			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid decrease value")};},
-			NextIs::THREADS   => { arg_threads     = arg.parse::<usize>().unwrap().clamp( 1, num_cpus::get());},
+			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().expect("Invalid `z`parameter ! ").clamp(1,3);},
+			//NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
+			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().expect("Invalid `r` parameter ! ").clamp(2,20);},
+			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid `d` parameter ! ")};},
+			NextIs::THREADS   => { arg_threads     = arg.parse::<usize>().expect("Invalid `t` parameter ! ").clamp( 1, num_cpus::get());},
 			NextIs::OUTPUT    => { arg_output = match arg.as_str() {
 									"tsv" |"TSV"|"" => Output::TSV,
 									"csv" |"CSV"    => Output::CSV,
 									"json"|"JSON"   => Output::JSON,
 									"xml" |"XML"    => Output::XML,
 									"ron" |"RON"    => Output::RON,
-									_               => panic!("Invalid output value")
+									_               => panic!("Invalid `o` parameter ! ")
 								};},
 			_                 => {},
 		}
@@ -546,7 +549,6 @@ fn init_app() -> Globals {
 
 	}
 
-	//if arg_signature.len() == 0 {
 	if arg_signature.is_empty() {
 		cli_help();
 		panic!("No signature !?");
@@ -561,7 +563,7 @@ fn init_app() -> Globals {
 	println!("- Output\t{:?} file",      arg_output);
 	println!();
 
-	let parenthesis: usize = arg_signature.find('(').unwrap();
+	let parenthesis: usize = arg_signature.find('(').expect("Valid Solidity signature (?) ");
 	let part_n: &str       = &arg_signature[..parenthesis];
 	let part_a: &str       = &arg_signature[parenthesis..];
 	let digit: u32         = (f64::log(IteratedValue::MAX as f64, BASE_NN as f64) as u32) + 1;
@@ -582,15 +584,15 @@ fn init_app() -> Globals {
 }
 
 
-
 fn main() {
 	let g: Globals = init_app();
 	//println!("{:?}", g);
-	threads_launcher( &g);
-	write_file(&g, "All done !");
-	process::exit(0);
 
+	let g = threads_launcher( &g);
+	write_file(g, "All done !");
+	process::exit(0);
 }
+
 
 
 //	time cargo run s "deposit(uint256)"  z 2  d true  t 3 r 8 o tsv

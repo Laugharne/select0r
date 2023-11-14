@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 clippy = "0.0.302"
 crossbeam = "0.8.2"
+ctrlc = "3.4.1"
 lazy_static = "1.4.0"
 num_cpus = "1.16.0"
 rust-crypto = "0.2.36"

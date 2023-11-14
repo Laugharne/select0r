@@ -74,14 +74,14 @@ Go into `release` sub-directory as working directory and launch `select0r`.
 | **`t`**    | `nbr_threads`        | numeric    | 4             | [2..#cpu]                  | **2**         | # of threads to use (*4*)    |
 | **`o`**    | `format_ouput`       | string     | xml           | tsv/csv/json/xml/ron *(5)* | **tsv**       | File format output           |
 
-- *(1) : no spaces, no parameter names, just a valid solidity signature*
+- *(1) : no spaces, no parameter names, just a [valid solidity signature](https://docs.soliditylang.org/en/develop/abi-spec.html#function-selector)*
 - *(2) : higher it is, longer it is*
 - *(3) : slower if true*
 - *(4) : hardware limitation (#CPU)*
 - *(5) : File formats*
-  - **tsv** *= Tab Separated Value*
-  - **csv** *= Comma Separated Value*
-  - **json** *= JavaScript Object Notation*
+  - **tsv** *= [Tab Separated Value](https://en.wikipedia.org/wiki/Tab-separated_values)*
+  - **csv** *= [Comma Separated Value](https://en.wikipedia.org/wiki/Comma-separated_values)*
+  - **json** *= [JavaScript Object Notation](https://www.json.org/json-en.html)*
   - **ron** *= [Rusty Object Notation](https://github.com/ron-rs/ron)*
   
 
