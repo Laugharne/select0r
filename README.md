@@ -36,7 +36,7 @@ The gas cost of a function name equals 4 times the number of zero bytes and 16 t
 
 This Rust program (**select0r**) is designed to find better names for an EVM (Ethereum Virtual Machine) function to optimize gas cost. It takes a function signature as input and performs calculations to find the best EVM function names in terms of gas cost.
 
-For more informations about gas optimisation related to function names, go check my article, please follow and share [**this link**](https://github.com/Laugharne/Optimal_Function_Names) 🇫🇷 !
+For more informations about **gas optimisation** related to **function names**, go check **my article**, please follow and share [**this link**](https://github.com/Laugharne/Optimal_Function_Names) 🇫🇷 !
 
 ----
 
