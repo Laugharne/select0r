@@ -92,11 +92,11 @@ select0r s "functionName(uint256)"  z 2  r 5  d true  t 2  o tsv
 ```
 
 ```bash
-`select0r s "functionName2(uint)"  z 2  r 7  d false  t 2  o json`
+select0r s "functionName2(uint)"  z 2  r 7  d false  t 2  o json
 ```
 
 ```bash
-`select0r s "deposit(uint)"  z 2  r 7  d false  t 2  o xml`
+select0r s "deposit(uint)"  z 2  r 7  d false  t 2  o xml
 ```
 
 
