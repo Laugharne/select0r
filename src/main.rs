@@ -65,7 +65,7 @@ struct Globals {
 	difficulty : u32,
 	nn_threads : usize,
 	digit_max  : u32,
-	decrease   : bool,
+	leading0   : bool,
 	results    : Vec<SignatureResult>,
 	max_results: usize,
 	output     : Output,
@@ -95,6 +95,7 @@ struct SignatureResult {
 	signature   : String,
 	selector    : u32,
 	leading_zero: u32,
+	nbr_of_zero : u32,
 }
 
 
@@ -229,6 +230,7 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 		signature   : signature,
 		selector    : selector_u32,
 		leading_zero: leading_zero,
+		nbr_of_zero : zero_counter,
 	})
 
 }
@@ -263,7 +265,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 			None => {},
 			Some(s) => {
 
-				if g.decrease == true {
+				if g.leading0 == true {
 					if s.selector < optimal {
 						optimal = s.selector;
 						{
@@ -281,6 +283,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 										signature   : s.signature,
 										selector    : optimal,
 										leading_zero: s.leading_zero,
+										nbr_of_zero : s.nbr_of_zero,
 									});
 									nn_results += 1;
 								}
@@ -296,6 +299,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 						signature   : s.signature,
 						selector    : s.selector,
 						leading_zero: s.leading_zero,
+						nbr_of_zero : s.nbr_of_zero,
 					});
 					nn_results = shared.len();
 				}
@@ -351,7 +355,8 @@ fn threads_launcher(g: &Globals) -> &Globals {
 		shared.push(SignatureResult {
 			signature   : g.signature.clone(),
 			selector    : u32::MAX,	//TO REWRITE
-			leading_zero: 0
+			leading_zero: 0,
+			nbr_of_zero : 0,
 		});
 	}
 
@@ -386,8 +391,8 @@ fn threads_launcher(g: &Globals) -> &Globals {
 /// the file writing process.
 /// * `message`: A message to be display in standard output, before writing to the file.
 fn write_file(g: & Globals, message: & str) {
-	let file_name: String = format!("select0r-{}--zero={}-max={}-decr={}-cpu={}.{:?}",
-						g.signature, g.difficulty, g.max_results, g.decrease, g.nn_threads, g.output);
+	let file_name: String = format!("select0r-{}--zero={}-max={}-lead={}-cpu={}.{:?}",
+						g.signature, g.difficulty, g.max_results, g.leading0, g.nn_threads, g.output);
 
 	println!("\n\n{}", message.green());
 	println!("\nOutput : {}\n", file_name.cyan());
@@ -396,11 +401,11 @@ fn write_file(g: & Globals, message: & str) {
 	match csv_file {
 		Ok(ref mut f) => {
 			let format: &str = match g.output {
-				Output::TSV  => "SELECTOR\tLEADING_ZERO\tSIGNATURE\n",
-				Output::CSV  => "\"SELECTOR\",\"LEADING_ZERO\",\"SIGNATURE\"\n",
-				Output::JSON => "{\n",
+				Output::TSV  => "SELECTOR\tNBR_OF_ZERO\tLEADING_ZERO\tSIGNATURE\n",
+				Output::CSV  => "\"SELECTOR\",\"NBR_OF_ZERO\",\"LEADING_ZERO\",\"SIGNATURE\"\n",
+				Output::JSON => "{\"select0r\":[\n",
 				Output::XML  => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n",
-				Output::RON  => "Select0r(\n\tresults: [\n",
+				Output::RON  => "Select0r( results: [\n",
 			};
 			let _ = f.write(format.as_bytes());
 
@@ -411,22 +416,22 @@ fn write_file(g: & Globals, message: & str) {
 				let comma = if line_idx==0 {" "}else{","};
 
 				let line_csv: String = match g.output {
-					Output::TSV  =>	format!("{:>08x}\t{}\t{}\n", line.selector, line.leading_zero, line.signature),
-					Output::CSV  =>	format!("\"{:>08x}\",{},\"{}\"\n", line.selector, line.leading_zero, line.signature),
-					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
-						,comma, line.selector, line.leading_zero, line.signature),
-					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.leading_zero, line.signature),
-					Output::RON  => format!("\t\t{}(selector: \"{:>08x}\", leading_zero: {}, signature: \"{}\")\n"
-						,comma, line.selector, line.leading_zero, line.signature),
+					Output::TSV  =>	format!("{:>08x}\t{}\t{}\t{}\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+					Output::CSV  =>	format!("\"{:>08x}\",{},{},\"{}\"\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"nbr_of_zero\":\"{}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
+						,comma, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<nbr_of_zero>{}</nbr_of_zero>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+					Output::RON  => format!("\t{}(selector: \"{:>08x}\", nbr_of_zero: {}, leading_zero: {}, signature: \"{}\")\n"
+						,comma, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 				line_idx += 1;
 			}	
 
 			let format: &str = match g.output {
-				Output::JSON => "}\n",
+				Output::JSON => "]}\n",
 				Output::XML  => "</select0r>\n",
-				Output::RON  => "\t],\n)\n",
+				Output::RON  => "],)\n",
 				_            => "",
 			};
 			let _ = f.write(format.as_bytes());
@@ -452,8 +457,8 @@ fn cli_help() {
 	);
 	eprintln!("Usage : select0r s <function_signature string> z <number_of_zeros> r <max_results> d <decrement boolean> t <nbr_threads> o <format_ouput>");
 	eprintln!();
-	eprintln!("Example 1 : select0r s \"functionName(uint256)\"  z 2  r 5  d true  t 2  o tsv");
-	eprintln!("Example 2 : select0r s \"functionName2(uint)\"  z 2  r 7  d false  t 2  o json");
+	eprintln!("Example 1 : select0r s \"functionName(uint256)\"  z 2  r 5  l true  t 2  o tsv");
+	eprintln!("Example 2 : select0r s \"functionName2(uint)\"  z 2  r 7  l false  t 2  o json");
 	eprintln!();
 }
 
@@ -489,7 +494,7 @@ fn init_app() -> Globals {
 	let mut arg_signature  : String = "".to_string();
 	let mut arg_difficulty : u32    = 2;
 	let mut arg_max_results: u32    = 4;
-	let mut arg_decrease   : bool   = false;
+	let mut arg_leading0   : bool   = false;
 	let mut arg_threads    : usize  = 2;
 	let mut arg_output     : Output = Output::TSV;
 
@@ -509,7 +514,7 @@ fn init_app() -> Globals {
 		SIGNATURE,
 		ZERO,
 		RESULTS,
-		DECREASE,
+		LEADING0,
 		THREADS,
 		OUTPUT,
 	}
@@ -521,9 +526,8 @@ fn init_app() -> Globals {
 		match _next {
 			NextIs::SIGNATURE => { arg_signature   = arg.to_string();},
 			NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().expect("Invalid `z`parameter ! ").clamp(1,3);},
-			//NextIs::ZERO      => { arg_difficulty  = arg.parse::<u32>().unwrap().clamp(1,3);},
 			NextIs::RESULTS   => { arg_max_results = arg.parse::<u32>().expect("Invalid `r` parameter ! ").clamp(2,20);},
-			NextIs::DECREASE  => { arg_decrease    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid `d` parameter ! ")};},
+			NextIs::LEADING0  => { arg_leading0    = match arg.as_str() {"1"|"true"|"TRUE"=>true, "0"|"false"|"FALSE"=>false, _=>panic!("Invalid `l` parameter ! ")};},
 			NextIs::THREADS   => { arg_threads     = arg.parse::<usize>().expect("Invalid `t` parameter ! ").clamp( 1, num_cpus::get());},
 			NextIs::OUTPUT    => { arg_output = match arg.as_str() {
 									"tsv" |"TSV"|"" => Output::TSV,
@@ -541,7 +545,7 @@ fn init_app() -> Globals {
 			"s"|"S" => { _next = NextIs::SIGNATURE;},
 			"z"|"Z" => { _next = NextIs::ZERO;},
 			"r"|"R" => { _next = NextIs::RESULTS;},
-			"d"|"D" => { _next = NextIs::DECREASE;},
+			"l"|"L" => { _next = NextIs::LEADING0;},
 			"t"|"T" => { _next = NextIs::THREADS;},
 			"o"|"O" => { _next = NextIs::OUTPUT;},
 			_       => { _next = NextIs::NOTHING;},
@@ -558,7 +562,7 @@ fn init_app() -> Globals {
 	println!("- Signature\t`{}`",        arg_signature);
 	println!("- Difficulty\t{} zero(s)", arg_difficulty);
 	println!("- Max results\t{}",        arg_max_results);
-	println!("- Decrease\t{}",           arg_decrease);
+	println!("- Leading `0`\t{}",           arg_leading0);
 	println!("- Nbr threads\t{} CPU(s)", arg_threads);
 	println!("- Output\t{:?} file",      arg_output);
 	println!();
@@ -575,7 +579,7 @@ fn init_app() -> Globals {
 		difficulty : arg_difficulty,
 		nn_threads : arg_threads,
 		digit_max  : digit,
-		decrease   : arg_decrease,
+		leading0   : arg_leading0,
 		results    : vec![],
 		max_results: arg_max_results as usize,
 		output     : arg_output,
@@ -595,16 +599,22 @@ fn main() {
 
 
 
-//	time cargo run s "deposit(uint256)"  z 2  d true  t 3 r 8 o tsv
-//	time cargo run s "deposit(uint256)"  z 2  d true  t 14 r 12 o tsv
+//	time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o tsv
+//	rm *.JSON; time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o json; cat *.JSON
+//	rm *.TSV;  time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o tsv;  cat *.TSV
+//	rm *.CSV;  time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o csv;  cat *.CSV
+//	rm *.XML;  time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o xml;  cat *.XML
+//	rm *.RON;  time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o ron;  cat *.RON
+//
+//	time cargo run s "deposit(uint256)"  z 2  l true  t 14 r 12 o tsv
 
-//	time ./select0r s "deposit(uint256)"  z 2  d true  t 14 r 15 o tsv
+//	time ./select0r s "deposit(uint256)"  z 2  L true  t 14 r 15 o tsv
 
-//	time cargo run s "aaaa(uint)"  z 2  d false  t 2
-//	time cargo run s "aaaa(uint)"  z 1  d true  t 3
-//	time cargo run s "deposit(uint256)"  z 2  d true  t 3 r 8 o tsv
+//	time cargo run s "aaaa(uint)"  z 2  l false  t 2
+//	time cargo run s "aaaa(uint)"  z 1  l true  t 3
+//	time cargo run s "deposit(uint256)"  z 2  l true  t 3 r 8 o tsv
 //					s signature
 //					z (nbr zero)
 //					r nbr results needed
-//					d decrease values
+//					l looking for leading zeros in priority
 //					t nbr of threads (clamp by app)
