@@ -73,7 +73,7 @@ Go into `release` sub-directory as working directory and launch `select0r`.
 | **`s`**    | `function_signature` | string     | mint(address) | *(1)*                      | **Mandatory** | Function signature *(1)*  |
 | **`z`**    | `number_of_zeros`    | numeric    | 2             | [1..3]                     | **2**         | Minimal # of zero *(2)*   |
 | **`r`**    | `max_results`        | numeric    | 5             | [2..10]                    | **4**         | # of needed result *(2)*  |
-| **`l`**    | `decrement`          | boolean    | true          | true/false                 | **false**     | *(3)*                     |
+| **`l`**    | `leading_zero`       | boolean    | true          | true/false                 | **false**     | *(3)*                     |
 | **`t`**    | `nbr_threads`        | numeric    | 4             | [2..#cpu]                  | **2**         | # of threads to use (*4*) |
 | **`o`**    | `format_ouput`       | string     | xml           | tsv/csv/json/xml/ron *(5)* | **tsv**       | File format output        |
 
