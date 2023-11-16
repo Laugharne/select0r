@@ -85,6 +85,7 @@ Go into `release` sub-directory as working directory and launch `select0r`.
   - **tsv** *= [Tab Separated Value](https://en.wikipedia.org/wiki/Tab-separated_values)*
   - **csv** *= [Comma Separated Value](https://en.wikipedia.org/wiki/Comma-separated_values)*
   - **json** *= [JavaScript Object Notation](https://www.json.org/json-en.html)*
+  - **xml** *= [Extensible Markup Language](https://en.wikipedia.org/wiki/XML)*
   - **ron** *= [Rusty Object Notation](https://github.com/ron-rs/ron)*
   
 
