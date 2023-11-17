@@ -63,7 +63,7 @@ Go into `release` sub-directory as working directory and launch `select0r`.
 
 ### 💻 Usage
 
-`select0r s <function_signature string> z <number_of_zeros> r <max_results> l <decrement boolean> t <nbr_threads> o <format_ouput>`
+`select0r s <function_signature string> z <number_of_zeros> r <max_results> l <leading_zero boolean> t <nbr_threads> o <format_ouput>`
 
 
 ### ✏️ Parameters
