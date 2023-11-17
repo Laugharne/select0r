@@ -413,16 +413,16 @@ fn write_file(g: & Globals, message: & str) {
 			let mut line_idx: u32 = 0;
 
 			for line in shared.iter() {
-				let comma = if line_idx==0 {" "}else{","};
+				let comma_or_not = if line_idx==0 {" "}else{","};
 
 				let line_csv: String = match g.output {
 					Output::TSV  =>	format!("{:>08x}\t{}\t{}\t{}\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 					Output::CSV  =>	format!("\"{:>08x}\",{},{},\"{}\"\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"nbr_of_zero\":\"{}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
-						,comma, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+						,comma_or_not, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<nbr_of_zero>{}</nbr_of_zero>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 					Output::RON  => format!("\t{}(selector: \"{:>08x}\", nbr_of_zero: {}, leading_zero: {}, signature: \"{}\")\n"
-						,comma, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
+						,comma_or_not, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
 				line_idx += 1;

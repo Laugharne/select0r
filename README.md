@@ -108,44 +108,70 @@ select0r s "deposit(uint)"  z 2  r 7  l false  t 2  o xml
 
 ## 📝 Results
 
-Get results for `mint(address)` signature looking for `2` lead zeros minimum, `sorted` by decremented selector value, using `3` threads, stop after`4` results and put it as an `XML` file.
+Get results for `execute()` signature looking for `2` lead zeros minimum, using `15` threads, stop after`8` results and put it as an `XML` file.
 
 ```bash
-select0r s "mint(address)"  z 2  l true  t 3  r 4  o xml
+select0r s "execute()"  z 2  l true  t 15  r 8  o xml
 ```
 An ouput file appears with the initial signature and some parameters in its name.
 
-**File :** `select0r-mint(address)--zero=2-max=4-lead=true-cpu=3.XML`
+**File :** `select0r-execute()--zero=2-max=8-lead=true-cpu=15.XML`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <select0r>
-  <result>
-    <selector>00a08a00</selector>
-    <nbr_of_zero>2</nbr_of_zero>
-    <leading_zero>1</leading_zero>
-    <signature>mint_Yh(address)</signature>
-  </result>
-  <result>
-    <selector>00009e37</selector>
-    <nbr_of_zero>2</nbr_of_zero>
-    <leading_zero>2</leading_zero>
-    <signature>mint_6X1(address)</signature>
-  </result>
-  <result>
-    <selector>000032d8</selector>
-    <nbr_of_zero>2</nbr_of_zero>
-    <leading_zero>2</leading_zero>
-    <signature>mint_AeL(address)</signature>
-  </result>
-  <result>
-    <selector>0000129b</selector>
-    <nbr_of_zero>2</nbr_of_zero>
-    <leading_zero>2</leading_zero>
-    <signature>mint_TWX(address)</signature>
-  </result>
+        <result>
+                <selector>ffffffff</selector>
+                <nbr_of_zero>0</nbr_of_zero>
+                <leading_zero>0</leading_zero>
+                <signature>execute()</signature>
+        </result>
+        <result>
+                <selector>1b9b0000</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>0</leading_zero>
+                <signature>execute_1qn()</signature>
+        </result>
+        <result>
+                <selector>00af0043</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>1</leading_zero>
+                <signature>execute_5Hw()</signature>
+        </result>
+        <result>
+                <selector>00940050</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>1</leading_zero>
+                <signature>execute_6Ii()</signature>
+        </result>
+        <result>
+                <selector>0000eb63</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>2</leading_zero>
+                <signature>execute_mAX()</signature>
+        </result>
+        <result>
+                <selector>0000cf6d</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>2</leading_zero>
+                <signature>execute_G5J()</signature>
+        </result>
+        <result>
+                <selector>00000622</selector>
+                <nbr_of_zero>2</nbr_of_zero>
+                <leading_zero>2</leading_zero>
+                <signature>execute_06SF()</signature>
+        </result>
+        <result>
+                <selector>000000ae</selector>
+                <nbr_of_zero>3</nbr_of_zero>
+                <leading_zero>3</leading_zero>
+                <signature>execute_6d4S()</signature>
+        </result>
 </select0r>
 ```
+
+
 
 --------
 
