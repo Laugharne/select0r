@@ -265,7 +265,7 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 			None => {},
 			Some(s) => {
 
-				if g.leading0 == true {
+				if g.leading0 {
 					if s.selector < optimal {
 						optimal = s.selector;
 						{
@@ -416,9 +416,7 @@ fn write_file(g: & Globals, message: & str) {
 			let _ = f.write(format.as_bytes());
 
 			let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
-			let mut line_idx: u32 = 0;
-
-			for line in shared.iter() {
+			for (line_idx, 	line) in shared.iter().enumerate() {
 				let comma_or_not = if line_idx==0 {" "}else{","};
 
 				let line_csv: String = match g.output {
@@ -431,7 +429,6 @@ fn write_file(g: & Globals, message: & str) {
 						,comma_or_not, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
 				};
 				let _ = f.write(line_csv.as_bytes());
-				line_idx += 1;
 			}	
 
 			let format: &str = match g.output {
