@@ -275,18 +275,24 @@ fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 								nn_results = shared.len();
 
 								let shared_optimal: u32 = last_signature.selector;
-								if shared_optimal < optimal {
-									optimal = shared_optimal;
-								} else if shared_optimal > optimal {
-									print!("{}", in_progress(s.leading_zero));	
-									shared.push( SignatureResult{
-										signature   : s.signature,
-										selector    : optimal,
-										leading_zero: s.leading_zero,
-										nbr_of_zero : s.nbr_of_zero,
-									});
-									nn_results += 1;
+								
+								match shared_optimal.cmp(&optimal) {
+									std::cmp::Ordering::Less => {
+										optimal = shared_optimal;
+									}
+									std::cmp::Ordering::Greater => {
+										print!("{}", in_progress(s.leading_zero));
+										shared.push( SignatureResult {
+											signature   : s.signature,
+											selector    : optimal,
+											leading_zero: s.leading_zero,
+											nbr_of_zero : s.nbr_of_zero,
+										});
+										nn_results += 1;
+									}
+									_ => {}
 								}
+								
 
 							}// if let Some(last_signature)
 						}// SHARED_RESULTS.lock()
