@@ -36,7 +36,11 @@ The gas cost of a function name equals 4 times the number of zero bytes and 16 t
 
 This Rust program (**select0r**) is designed to find better names for an EVM (Ethereum Virtual Machine) function to optimize gas cost. It takes a function signature as input and performs calculations to find the best EVM function names in terms of gas cost.
 
-For more informations about **gas optimisation** related to **function names**, go check **my article**, please follow and share [**this link**](https://github.com/Laugharne/Optimal_Function_Names) 🇫🇷
+For more informations about **gas optimisation** related to **function names**, go check **my article**, please follow and share it !
+
+**Links :**
+-  **[GitHub - Laugharne/Optimal_Function_Names](https://github.com/Laugharne/Optimal_Function_Names)**
+- **[Optimisation des EVM, avec les noms de fonctions | Medium]( https://medium.com/@franck.maussand/optimisation-sur-ethereum-faites-la-diff%C3%A9rence-avec-les-noms-de-fonctions-ba4692c9e39f)** 🇫🇷
 
 **Feel free to [contact me !](mailto:franck@maussand.net)**
 
@@ -180,7 +184,7 @@ An ouput file appears with the initial signature and some parameters in its name
 
 **Yad** (« [Yet Another Dialog](https://doc.ubuntu-fr.org/yad_yet_another_dialog) ») is a tool to create graphic dialog boxes with shell scripts.
 
-![](yad_select0r.png)
+![](assets/yad_select0r.png)
 
 
 ### 📦 Installation

@@ -357,14 +357,16 @@ fn in_progress(nn_zeros: u32) -> ColoredString {
 /// `Globals`.
 fn threads_launcher(g: &Globals) -> &Globals {
 	{
-		let mut shared = SHARED_RESULTS.lock().unwrap();
-		let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();//+
-		let s2s: SelectorResult = signature_to_selector(&g.signature, hasher);
+		let mut shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().unwrap();
+
+		let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
+		let s2s: SelectorResult        = signature_to_selector(&g.signature, hasher);
+		
 		shared.push(SignatureResult {
 			signature   : g.signature.clone(),
-			selector    : s2s.selector,//u32::MAX,	//TO REWRITE
-			leading_zero: count_leading_zeros(s2s.selector),//0,
-			nbr_of_zero : s2s.zero_counter,//à,
+			selector    : s2s.selector,
+			leading_zero: count_leading_zeros(s2s.selector),
+			nbr_of_zero : s2s.zero_counter,
 		});
 	}
 
