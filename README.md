@@ -14,6 +14,7 @@
 	- [🎉 Yad bonus !](#-yad-bonus-)
 		- [📦 Installation](#-installation)
 		- [💻 Script](#-script)
+	- [TO DO](#to-do)
 
 <!-- /TOC -->
 
@@ -41,6 +42,7 @@ For more informations about **gas optimisation** related to **function names**, 
 **Links :**
 -  **[GitHub - Laugharne/Optimal_Function_Names](https://github.com/Laugharne/Optimal_Function_Names)**
 - **[Optimisation des EVM, avec les noms de fonctions | Medium]( https://medium.com/@franck.maussand/optimisation-sur-ethereum-faites-la-diff%C3%A9rence-avec-les-noms-de-fonctions-ba4692c9e39f)** 🇫🇷
+- **[Optimization on Ethereum: Make a Difference with Function Names](https://medium.com/coinsbench/optimization-on-ethereum-make-a-difference-with-function-names-9cc4a963424b)** 🇬🇧
 
 **Feel free to [contact me !](mailto:franck@maussand.net)**
 
@@ -221,3 +223,8 @@ output=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $7 }')
 decrease=$(echo "$select0r" | awk 'BEGIN {FS="|" } { print $8 }')
 path_to_select0r/select0r  s $signature  z $nn_zero  l $decrease  t $nn_threads  r $nn_result  o $output
 ```
+
+## TO DO
+
+- Add : Rows of String Values (RSV) format ouput [GitHub - Stenway/RSV-Specification: Rows of String Values (RSV Data Format) Specification - A Binary Alternative to CSV](https://github.com/Stenway/RSV-Specification)
+- Add : Simple Markup Language (SML) format output [SML - The Simple Markup Language](https://www.simpleml.com/)
