@@ -1,0 +1,7 @@
+Select0r( results: [
+	 (selector: "e902cbc1", nbr_of_zero: 0, leading_zero: 0, signature: "functionName(uint256)")
+	,(selector: "036f0000", nbr_of_zero: 2, leading_zero: 0, signature: "functionName_Lt(uint256)")
+	,(selector: "00001947", nbr_of_zero: 2, leading_zero: 2, signature: "functionName_0IN(uint256)")
+	,(selector: "000013f8", nbr_of_zero: 2, leading_zero: 2, signature: "functionName_Uxw(uint256)")
+	,(selector: "000000a7", nbr_of_zero: 3, leading_zero: 3, signature: "functionName_1p4n(uint256)")
+],)

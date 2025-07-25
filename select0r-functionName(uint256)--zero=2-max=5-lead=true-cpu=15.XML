@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<select0r>
+	<result>
+		<selector>e902cbc1</selector>
+		<nbr_of_zero>0</nbr_of_zero>
+		<leading_zero>0</leading_zero>
+		<signature>functionName(uint256)</signature>
+	</result>
+	<result>
+		<selector>036f0000</selector>
+		<nbr_of_zero>2</nbr_of_zero>
+		<leading_zero>0</leading_zero>
+		<signature>functionName_Lt(uint256)</signature>
+	</result>
+	<result>
+		<selector>00001947</selector>
+		<nbr_of_zero>2</nbr_of_zero>
+		<leading_zero>2</leading_zero>
+		<signature>functionName_0IN(uint256)</signature>
+	</result>
+	<result>
+		<selector>000013f8</selector>
+		<nbr_of_zero>2</nbr_of_zero>
+		<leading_zero>2</leading_zero>
+		<signature>functionName_Uxw(uint256)</signature>
+	</result>
+	<result>
+		<selector>000000a7</selector>
+		<nbr_of_zero>3</nbr_of_zero>
+		<leading_zero>3</leading_zero>
+		<signature>functionName_1p4n(uint256)</signature>
+	</result>
+</select0r>

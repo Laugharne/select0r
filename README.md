@@ -21,7 +21,7 @@
 
 ## 🔭 Overview
 
-Solidity functions can achieve higher efficiency when their function selector consists mainly of zeros. 
+Solidity functions can achieve higher efficiency when their function selector consists mainly of zeros.
 
 This tool helps you to generate a new selector for your Solidity contracts and save gas costs by using the smallest possible selector.
 
@@ -93,7 +93,7 @@ Go into `release` sub-directory as working directory and launch `select0r`.
   - **json** *= [JavaScript Object Notation](https://www.json.org/json-en.html)*
   - **xml** *= [Extensible Markup Language](https://en.wikipedia.org/wiki/XML)*
   - **ron** *= [Rusty Object Notation](https://github.com/ron-rs/ron)*
-  
+
 
 ### 👉 Examples
 
@@ -187,6 +187,8 @@ An ouput file appears with the initial signature and some parameters in its name
 **Yad** (« [Yet Another Dialog](https://doc.ubuntu-fr.org/yad_yet_another_dialog) ») is a tool to create graphic dialog boxes with shell scripts.
 
 ![](assets/yad_select0r.png)
+
+Resources : [YAD Guide](https://yad-guide.ingk.se/)
 
 
 ### 📦 Installation
