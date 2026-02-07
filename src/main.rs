@@ -4,6 +4,7 @@ extern crate crypto;
 use std::io::prelude::*;
 use std::f64;
 use std::fs::File;
+use std::io::BufWriter; // *
 use std::env;
 use text_colorizer::*;
 
@@ -113,17 +114,17 @@ struct SignatureResult {
 ///
 /// The function `base64_to_string` returns a `String` as we know that it's a valid UTF-8 string.
 fn base64_to_string(digit: u32, mut value: IteratedValue) -> String {
-    const ALPHABET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+	const ALPHABET: &[u8] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
-    let mut buffer: Vec<u8> = vec![0u8; digit as usize];
+	let mut buffer: Vec<u8> = vec![0u8; digit as usize];
 
-    for i in (0..digit as usize).rev() {
-        buffer[i] =   ALPHABET[(value & BASE_MAX) as usize];
-        value     >>= BASE_BITS;
-    }
+	for i in (0..digit as usize).rev() {
+		buffer[i] =   ALPHABET[(value & BASE_MAX) as usize];
+		value     >>= BASE_BITS;
+	}
 
-    // Direct conversion (we know that ALPHABET is UTF-8 valid)
-    unsafe { String::from_utf8_unchecked(buffer) }
+	// Direct conversion (we know that ALPHABET is UTF-8 valid)
+	unsafe { String::from_utf8_unchecked(buffer) }
 }
 
 
@@ -237,8 +238,8 @@ fn compute(g: &Globals, digit: u32, value: IteratedValue, hasher: Sha3) -> Optio
 /// `IteratedValue`.
 fn thread(g: Globals, idx: IteratedValue, digit: u32, max: IteratedValue) {
 	let hasher: crypto::sha3::Sha3 = crypto::sha3::Sha3::keccak256();
-	let mut optimal:u32       = u32::MAX;  // TODO !
-	let mut nn_results: usize = 1;         // TODO !
+	let mut optimal:u32       = u32::MAX;
+	let mut nn_results: usize = 1;
 	{
 		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
 		if let Some(last_signature) = shared.last() {
@@ -387,53 +388,102 @@ fn threads_launcher(g: &Globals) -> &Globals {
 /// * `g`: A reference to a struct called `Globals` which contains various configuration parameters for
 /// the file writing process.
 /// * `message`: A message to be display in standard output, before writing to the file.
-fn write_file(g: & Globals, message: & str) {
+fn write_file(g: &Globals, message: &str) {
 	let file_name: String = format!("select0r-{}--zero={}-max={}-lead={}-cpu={}.{:?}",
-						g.signature, g.difficulty, g.max_results, g.leading0, g.nn_threads, g.output);
+		g.signature, g.difficulty, g.max_results, g.leading0, g.nn_threads, g.output).to_lowercase();
 
 	println!("\n\n{}", message.green());
-	println!("\nOutput : {}\n", file_name.cyan());
-	let mut csv_file: Result<File, std::io::Error> = File::create(file_name);
+	println!("Output : {}\n", file_name.cyan());
 
-	match csv_file {
-		Ok(ref mut f) => {
-			let format: &str = match g.output {
-				Output::TSV  => "SELECTOR\tNBR_OF_ZERO\tLEADING_ZERO\tSIGNATURE\n",
-				Output::CSV  => "\"SELECTOR\",\"NBR_OF_ZERO\",\"LEADING_ZERO\",\"SIGNATURE\"\n",
-				Output::JSON => "{\"select0r\":[\n",
-				Output::XML  => "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n",
-				Output::RON  => "Select0r( results: [\n",
-			};
-			let _ = f.write(format.as_bytes());
+	// Formater factory
+	let formatter: Box<dyn Formatter> = match g.output {
+		Output::TSV  => Box::new(TsvFormatter),
+		Output::CSV  => Box::new(CsvFormatter),
+		Output::JSON => Box::new(JsonFormatter),
+		Output::XML  => Box::new(XmlFormatter),
+		Output::RON  => Box::new(RonFormatter),
+	};
 
-			let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic ! ");
-			for (line_idx, 	line) in shared.iter().enumerate() {
-				let comma_or_not = if line_idx==0 {" "}else{","};
+	let file: File                  = File::create(&file_name).expect("Failed to create file");
+	let mut writer: BufWriter<File> = BufWriter::new(file);
 
-				let line_csv: String = match g.output {
-					Output::TSV  =>	format!("{:>08x}\t{}\t{}\t{}\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
-					Output::CSV  =>	format!("\"{:>08x}\",{},{},\"{}\"\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
-					Output::JSON =>	format!("\t{}{{ \"selector\":\"{:>08x}\", \"nbr_of_zero\":\"{}\", \"leading_zero\":\"{}\", \"signature\":\"{}\" }}\n"
-						,comma_or_not, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
-					Output::XML  =>	format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<nbr_of_zero>{}</nbr_of_zero>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n", line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
-					Output::RON  => format!("\t{}(selector: \"{:>08x}\", nbr_of_zero: {}, leading_zero: {}, signature: \"{}\")\n"
-						,comma_or_not, line.selector, line.nbr_of_zero, line.leading_zero, line.signature),
-				};
-				let _ = f.write(line_csv.as_bytes());
-			}
+	// Write header
+	writer.write_all(formatter.header().as_bytes()).ok();
 
-			let format: &str = match g.output {
-				Output::JSON => "]}\n",
-				Output::XML  => "</select0r>\n",
-				Output::RON  => "],)\n",
-				_            => "",
-			};
-			let _ = f.write(format.as_bytes());
-
-		},
-		Err(_e) => panic!(),
+	// Write lines of data
+	{
+		let shared: std::sync::MutexGuard<'_, Vec<SignatureResult>> = SHARED_RESULTS.lock().expect("Mutex panic !");
+		for (i, res) in shared.iter().enumerate() {
+			let line: String = formatter.line(res, i == 0);
+			writer.write_all(line.as_bytes()).ok();
+		}
 	}
 
+	// Write footer
+	writer.write_all(formatter.footer().as_bytes()).ok();
+}
+
+trait Formatter {
+	fn header(&self) -> String;
+	fn line(&self, res: &SignatureResult, is_first: bool) -> String;
+	fn footer(&self) -> String;
+}
+
+// Exemple d'Implementation for JSON
+struct JsonFormatter;
+impl Formatter for JsonFormatter {
+	fn header(&self) -> String { "{\"select0r\":[\n".to_string() }
+	fn footer(&self) -> String { "]}\n".to_string() }
+	fn line(&self, res: &SignatureResult, is_first: bool) -> String {
+		let comma: &str = if is_first { " " } else { "," };
+		format!("\t{}{{ \"selector\":\"{:>08x}\", \"nbr_of_zero\":{}, \"leading_zero\":{}, \"signature\":\"{}\" }}\n",
+			comma, res.selector, res.nbr_of_zero, res.leading_zero, res.signature)
+	}
+}
+
+// Implementation for TSV
+struct TsvFormatter;
+impl Formatter for TsvFormatter {
+	fn header(&self) -> String { "SELECTOR\tNBR_OF_ZERO\tLEADING_ZERO\tSIGNATURE\n".to_string() }
+	fn footer(&self) -> String { "".to_string() }
+	fn line(&self, res: &SignatureResult, _is_first: bool) -> String {
+		format!("{:>08x}\t{}\t{}\t{}\n",
+			res.selector, res.nbr_of_zero, res.leading_zero, res.signature)
+	}
+}
+
+// Implementation for CSV
+struct CsvFormatter;
+impl Formatter for CsvFormatter {
+	fn header(&self) -> String { "SELECTOR,NBR_OF_ZERO,LEADING_ZERO,SIGNATURE\n".to_string() }
+	fn footer(&self) -> String { "".to_string() }
+	fn line(&self, res: &SignatureResult, _is_first: bool) -> String {
+		format!("{:>08x},{},{},{}\n",
+			res.selector, res.nbr_of_zero, res.leading_zero, res.signature)
+	}
+}
+
+// Implementation for XML
+struct XmlFormatter;
+impl Formatter for XmlFormatter {
+	fn header(&self) -> String { "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<select0r>\n".to_string() }
+	fn footer(&self) -> String { "</select0r>\n".to_string() }
+	fn line(&self, res: &SignatureResult, _is_first: bool) -> String {
+		format!("\t<result>\n\t\t<selector>{:>08x}</selector>\n\t\t<nbr_of_zero>{}</nbr_of_zero>\n\t\t<leading_zero>{}</leading_zero>\n\t\t<signature>{}</signature>\n\t</result>\n",
+			res.selector, res.nbr_of_zero, res.leading_zero, res.signature)
+	}
+}
+
+// Implementation for RON
+struct RonFormatter;
+impl Formatter for RonFormatter {
+	fn header(&self) -> String { "Select0r( results: [\n".to_string() }
+	fn footer(&self) -> String { "],)\n".to_string() }
+	fn line(&self, res: &SignatureResult, is_first: bool) -> String {
+		let comma: &str = if is_first { " " } else { "," };
+		format!("\t{}(selector: \"{:>08x}\", nbr_of_zero: {}, leading_zero: {}, signature: \"{}\")\n",
+			comma, res.selector, res.nbr_of_zero, res.leading_zero, res.signature)
+	}
 }
 
 
